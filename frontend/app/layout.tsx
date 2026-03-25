@@ -1,9 +1,10 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import { AuthProvider } from '@/lib/AuthContext'
+import Navbar from '@/components/Navbar'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
-
-import Navbar from '@/components/Navbar'
 
 export const metadata = {
   title: 'SOLE NODE | Sneaker Intelligence',
@@ -18,10 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="bg-[#101217]">
       <body className={inter.className}>
-        <Navbar />
-        <main className="pt-20 min-h-screen">
-          {children}
-        </main>
+        <AuthProvider>
+          <Navbar />
+          <main className="pt-20 min-h-screen">
+            {children}
+          </main>
+          <Script 
+            src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription`}
+            strategy="beforeInteractive"
+          />
+        </AuthProvider>
       </body>
     </html>
   )

@@ -7,21 +7,11 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore'
+import PayPalSubscription from '@/components/PayPalSubscription'
+import { useAuth } from '@/lib/AuthContext'
 
 export default function LandingPage() {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  }
-
+  const { user } = useAuth()
   const [liveBlogs, setLiveBlogs] = useState<any[]>([])
   
   useEffect(() => {
@@ -73,7 +63,6 @@ export default function LandingPage() {
           </div>
         </motion.div>
 
-        {/* Floating Mockup (Pure CSS) */}
         <motion.div 
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -158,35 +147,38 @@ export default function LandingPage() {
         </div>
         
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-          <motion.div whileHover={{ y: -5, scale: 1.01 }} className="p-10 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden group">
-            <h4 className="text-xl font-black uppercase mb-2">Seeker Base</h4>
+          <motion.div whileHover={{ y: -5, scale: 1.01 }} className="p-10 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden group flex flex-col h-full">
+            <h4 className="text-xl font-black uppercase mb-2">Standard</h4>
             <div className="flex items-baseline gap-2 mb-8">
-              <span className="text-4xl font-black">FREE</span>
-              <span className="text-gray-500 text-sm font-bold uppercase tracking-widest">/ Private Beta</span>
+              <span className="text-4xl font-black">$5</span>
+              <span className="text-gray-500 text-sm font-bold uppercase tracking-widest">/ Mo</span>
             </div>
             <ul className="space-y-4 mb-10 text-left">
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300"><Zap className="w-4 h-4 text-cyan-400" /> Real-time Dashboard</li>
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300"><Zap className="w-4 h-4 text-cyan-400" /> Top 4 Boutiques</li>
+              <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300"><Target className="w-4 h-4 text-cyan-400" /> Up to 3 Alerts</li>
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300"><Zap className="w-4 h-4 text-cyan-400" /> Basic Filter Suite</li>
             </ul>
-            <Link href="/seek" className="w-full h-14 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs transition-all">Get Started</Link>
+            <div className="mt-auto">
+               <PayPalSubscription planId="P-7M729221S6983803SMCGZ37Q" tier="Standard" />
+            </div>
           </motion.div>
 
-          <motion.div whileHover={{ y: -5, scale: 1.01 }} className="p-10 rounded-3xl bg-linear-to-br from-ds-indigo-deep to-ds-bg border border-ds-indigo/40 relative overflow-hidden group">
+          <motion.div whileHover={{ y: -5, scale: 1.01 }} className="p-10 rounded-3xl bg-linear-to-br from-ds-indigo-deep to-ds-bg border border-ds-indigo/40 relative overflow-hidden group flex flex-col h-full">
             <div className="absolute top-0 right-0 p-4 bg-ds-indigo text-ds-bg rounded-bl-2xl font-black uppercase text-[10px] tracking-widest">Recommended</div>
-            <h4 className="text-xl font-black uppercase mb-2">Node Elite</h4>
+            <h4 className="text-xl font-black uppercase mb-2">Pro</h4>
             <div className="flex items-baseline gap-2 mb-8">
-              <span className="text-4xl font-black">R199</span>
+              <span className="text-4xl font-black">$12</span>
               <span className="text-gray-500 text-sm font-bold uppercase tracking-widest">/ Mo</span>
             </div>
             <ul className="space-y-4 mb-10 text-left">
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300">
                 <Target className="w-4 h-4 text-white" /> 
-                <span>Unlimited Local & Global Watchlist</span>
+                <span>Up to 1000 Alerts</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300">
                 <Zap className="w-4 h-4 text-white" /> 
-                <span className="leading-tight">Push Notifications: <br className="md:hidden" /> <span className="text-white font-black">[Discord / Telegram / WhatsApp / SMS / Email]</span></span>
+                <span className="leading-tight">Push Notifications: <br className="md:hidden" /> <span className="text-white font-black">[Discord]</span></span>
               </li>
               <li className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-white transition-colors duration-300">
                 <Globe className="w-4 h-4 text-white" /> 
@@ -197,7 +189,9 @@ export default function LandingPage() {
                 <span>Archived Price History & Analytics</span>
               </li>
             </ul>
-            <button disabled className="w-full h-14 bg-ds-indigo text-ds-bg rounded-2xl flex items-center justify-center font-black uppercase text-xs transition-all shadow-[0_0_20px_rgba(129,140,248,0.3)] opacity-50 cursor-not-allowed italic">Coming_Soon</button>
+            <div className="mt-auto">
+               <PayPalSubscription planId="P-2UF78487X1571584RMCGZ4EQ" tier="Pro" />
+            </div>
           </motion.div>
         </div>
       </section>
@@ -205,7 +199,6 @@ export default function LandingPage() {
       {/* 🛠️ Detailed Features Section */}
       <section className="py-32 px-12 border-t border-white/5 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto flex flex-col gap-24">
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
              <div className="order-2 md:order-1 text-left">
                 <div className="flex items-center gap-3 mb-6 justify-start">
@@ -232,48 +225,6 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-linear-to-t from-ds-bg via-transparent to-transparent opacity-60" />
              </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-             <div className="aspect-video bg-white/5 border border-white/10 rounded-3xl relative overflow-hidden flex items-center justify-center shadow-2xl">
-                <div className="relative">
-                   <Bell className="w-20 h-20 text-ds-indigo/20 animate-pulse" />
-                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-ds-red rounded-full flex items-center justify-center text-[10px] font-bold shadow-[0_0_15px_rgba(239,68,68,0.5)]">!</div>
-                </div>
-             </div>
-             <div className="text-left">
-                <div className="flex items-center gap-3 mb-6 justify-start">
-                   <Bell className="w-5 h-5 text-ds-indigo" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Alert Engine</span>
-                </div>
-                <h2 className="text-4xl font-black uppercase tracking-tighter mb-6 underline decoration-ds-indigo/30 underline-offset-8">5-Channel Blast System</h2>
-                <p className="text-gray-400 text-lg leading-relaxed">
-                   Notifications are more than just pings. Our enterprise-grade relay system pushes alerts via Discord webhooks, Telegram bots, WhatsApp Business API, SMS, and Email simultaneously. Configure custom thresholds for size-specific restocks.
-                </p>
-             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-             <div className="order-2 md:order-1 text-left">
-                <div className="flex items-center gap-3 mb-6 justify-start">
-                   <Search className="w-5 h-5 text-ds-orange" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Arbitrage Intelligence</span>
-                </div>
-                <h2 className="text-4xl font-black uppercase tracking-tighter mb-6 underline decoration-ds-orange/30 underline-offset-8">Cross-Retailer Price Tracking</h2>
-                <p className="text-gray-400 text-lg leading-relaxed">
-                   Identify market inefficiencies in real-time. Compare various local retail prices to find the highest margin pairs. Our price-drop detection highlights "Steals" the moment a retailer marks down their stock.
-                </p>
-             </div>
-             <div className="order-1 md:order-2 aspect-video bg-white/5 border border-white/10 rounded-3xl relative overflow-hidden flex items-center justify-center shadow-2xl">
-                <Database className="w-24 h-24 text-white/5" />
-                <div className="absolute bottom-10 left-10 p-4 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md">
-                   <div className="flex gap-2">
-                      <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Active_Scan</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-
         </div>
       </section>
 

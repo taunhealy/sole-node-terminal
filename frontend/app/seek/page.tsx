@@ -12,7 +12,8 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp,
-  where
+  where,
+  doc
 } from 'firebase/firestore'
 import { 
   Zap,
@@ -38,6 +39,8 @@ import {
   X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface StockItem {
   sku_id: string
@@ -97,12 +100,46 @@ export default function TerminalBoard() {
   const [visibleCount, setVisibleCount] = useState(50)
   const [genderFilter, setGenderFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
-
+  
+  const { user, loading: authLoading, appUser } = useAuth()
+  const router = useRouter()
   const watchlistRef = useRef<string[]>([])
-  const userEmail = "kea@logic.com"
+  const userEmail = user?.email || ""
+
+  // Helper functions
+  const handleFilterToItem = (sku?: string) => {
+    if (sku) {
+      setSearchTerm(sku)
+      setActiveTab('hot')
+    }
+  }
+
+  const addNotification = (log: RestockLog) => {
+    const id = Math.random().toString(36).substr(2, 9)
+    setNotifications(prev => [{ ...log, nid: id }, ...prev].slice(0, 3))
+    
+    if (!muted) {
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+      audio.volume = 0.5
+      audio.play().catch(() => {})
+    }
+
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.nid !== id))
+    }, 6000)
+  }
+
+  // Auth Guard
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/')
+    }
+  }, [user, authLoading, router])
 
   // Unified Subscription Effect
   useEffect(() => {
+    if (!userEmail) return
+
     const logsQuery = query(collection(db, "restock_logs"), orderBy("detected_at", "desc"), limit(100))
     const unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
       const fetchedLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RestockLog[]
@@ -134,10 +171,7 @@ export default function TerminalBoard() {
     const unsubscribeWatchlist = onSnapshot(watchlistQuery, (snapshot) => {
       const newSids = snapshot.docs.map(doc => doc.data().sku_id)
       watchlistRef.current = newSids
-      setWatchlistSids(prev => {
-         if (JSON.stringify(prev) === JSON.stringify(newSids)) return prev
-         return newSids
-      })
+      setWatchlistSids(newSids)
     })
 
     setMounted(true)
@@ -146,33 +180,7 @@ export default function TerminalBoard() {
       unsubscribeStock()
       unsubscribeWatchlist()
     }
-  }, [])
-
-  const handleFilterToItem = (sku?: string) => {
-    if (sku) {
-      setSearchTerm(sku)
-      setActiveTab('hot')
-    }
-  }
-
-  const addNotification = (log: RestockLog) => {
-    const id = Math.random().toString(36).substr(2, 9)
-    setNotifications(prev => [{ ...log, nid: id }, ...prev].slice(0, 3))
-    
-    if (!muted) {
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
-      audio.volume = 0.5
-      audio.play().catch(() => {})
-    }
-
-    setTimeout(() => {
-      removeNotification(id)
-    }, 6000)
-  }
-
-  const removeNotification = (nid: string) => {
-    setNotifications(prev => prev.filter(n => n.nid !== nid))
-  }
+  }, [userEmail])
 
   const allFilteredResults = useMemo(() => {
     let result = stock.filter(item => {
@@ -250,7 +258,13 @@ export default function TerminalBoard() {
     })
   }, [stock])
 
-  if (!mounted) return null
+  if (authLoading || !mounted) return (
+     <div className="flex items-center justify-center h-screen bg-ds-bg">
+        <div className="w-12 h-12 border-4 border-ds-indigo border-t-transparent rounded-full animate-spin" />
+     </div>
+  )
+
+  if (!user) return null
 
   return (
     <div className="flex h-[calc(100vh-80px)] bg-ds-bg text-white overflow-hidden text-[13px] selection:bg-ds-blue/30">
@@ -284,7 +298,7 @@ export default function TerminalBoard() {
           <NavItem icon={<TrendingUp className="w-4 h-4" />} label="New Releases" active={activeTab === 'releases'} onClick={() => setActiveTab('releases')} />
           <NavItem icon={<Activity className="w-4 h-4" />} label="Restocks" active={activeTab === 'restocks'} onClick={() => setActiveTab('restocks')} />
           <NavItem icon={<Zap className="w-4 h-4 text-ds-blue" />} label="Sales" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} />
-          <NavItem icon={<Star className="w-4 h-4" />} label="Watchlist" active={activeTab === 'watchlist'} onClick={() => setActiveTab('watchlist')} />
+          <NavItem icon={<Star className={`w-4 h-4 ${watchlistSids.length > 0 ? 'fill-current' : ''}`} />} label="Watchlist" count={watchlistSids.length} active={activeTab === 'watchlist'} onClick={() => setActiveTab('watchlist')} />
           
           <div className="h-px bg-ds-border my-4 mx-2" />
           <p className="px-4 py-2 text-[10px] font-black uppercase text-ds-text-dim hidden md:block">Stores</p>
@@ -355,6 +369,12 @@ export default function TerminalBoard() {
               <Star className={`w-3.5 h-3.5 ${onlyExclusives ? 'fill-current' : ''}`} />
               <span className="hidden sm:inline">Exclusives</span>
             </button>
+            {appUser?.tier && (
+              <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${appUser.tier === 'Pro' ? 'bg-ds-indigo-deep border-ds-indigo-border text-ds-indigo shadow-[0_0_15px_rgba(129,140,248,0.2)]' : 'bg-white/5 border-white/10 text-ds-text-dim'}`}>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                {appUser.tier} NODE
+              </div>
+            )}
             <button onClick={() => setMuted(!muted)} className={`p-2 rounded-lg transition-colors ${muted ? 'text-ds-red' : 'text-ds-text-dim hover:text-white'}`} suppressHydrationWarning>
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
@@ -457,30 +477,7 @@ export default function TerminalBoard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredStock.map((item) => {
-                  const st = (item.size_title || '').trim()
-                  const rawColor = (item.color || '').trim()
-                  let s = st, clr = rawColor || '—'
-                  
-                  if (st.includes(' / ')) {
-                    const parts = st.split(' / ')
-                    s = parts[0]; clr = rawColor || parts[1]
-                  } 
-                  else if (!/[0-9]/.test(st.replace(/[^0-9]/g, '')) && st.length > 1 && !rawColor) {
-                    s = '—'; clr = st
-                  }
-                  if (clr === '—') {
-                    const titleParts = item.product_title.split(' - ')
-                    if (titleParts.length > 1) {
-                        const lastPart = titleParts[titleParts.length - 1].trim()
-                        if (!/[0-9]/.test(lastPart) && lastPart.length > 2) clr = lastPart
-                    }
-                  }
-
-                  const titleLower = item.product_title.toLowerCase()
-                  const isWomen = titleLower.includes("women's") || titleLower.includes("(w)") || titleLower.includes("wmms")
-
-                  return (
+                {filteredStock.map((item) => (
                   <tr key={item.sku_id} className="hover:bg-white/5 border-b border-ds-border group transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -503,17 +500,15 @@ export default function TerminalBoard() {
                        </span>
                     </td>
                     <td className="px-2 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2 group/size">
-                        <SizeBadge size={s} />
-                      </div>
+                       <SizeBadge size={item.size_title} />
                     </td>
                     <td className="px-2 py-4 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${isWomen ? 'bg-pink-500/10 text-pink-500 border border-pink-500/20' : 'bg-ds-cyan-deep text-ds-cyan border border-ds-cyan-border'}`}>
-                        {isWomen ? 'F' : 'M'}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${item.product_title.toLowerCase().includes("women's") ? 'bg-pink-500/10 text-pink-500 border border-pink-500/20' : 'bg-ds-cyan-deep text-ds-cyan border border-ds-cyan-border'}`}>
+                        {item.product_title.toLowerCase().includes("women's") ? 'F' : 'M'}
                       </span>
                     </td>
                     <td className="px-4 py-4 overflow-hidden max-w-[140px]">
-                      <span className="text-[11px] font-black uppercase text-ds-text-dim tracking-tighter truncate block">{clr}</span>
+                      <span className="text-[11px] font-black uppercase text-ds-text-dim tracking-tighter truncate block">{item.color || '—'}</span>
                     </td>
                     <td className="px-4 py-4">
                       <span className={`text-[11px] font-black uppercase ${
@@ -527,14 +522,9 @@ export default function TerminalBoard() {
                     <td className="px-4 py-4 text-right font-black">
                        <div className="flex flex-col items-end">
                           <div className="flex items-center gap-2">
-                            {(item.current_price ?? 0) < (item.original_price ?? 0) && (
-                              <span className="px-1.5 py-0.5 bg-ds-blue/10 text-ds-blue text-[9px] font-black rounded border border-ds-blue/20">
-                                -R{(item.original_price! - item.current_price!).toLocaleString()}
-                              </span>
-                            )}
-                            <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-blue' : 'text-white'}`}>
-                               R{(item.current_price ?? 0).toLocaleString()}
-                            </span>
+                             <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-blue' : 'text-white'}`}>
+                                R{(item.current_price ?? 0).toLocaleString()}
+                             </span>
                           </div>
                           {(item.current_price ?? 0) < (item.original_price ?? 0) && (
                             <span className="text-[9px] line-through text-gray-400 opacity-50">R{(item.original_price ?? 0).toLocaleString()}</span>
@@ -545,10 +535,10 @@ export default function TerminalBoard() {
                         <InventoryBadge soh={item.soh} />
                     </td>
                     <td className="px-6 py-4 text-right pr-10">
-                       <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} />
+                       <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} currentCount={watchlistSids.length} tier={appUser?.tier || 'Standard'} email={userEmail} />
                     </td>
                    </tr>
-                )})}
+                ))}
               </tbody>
             </table>
 
@@ -589,10 +579,15 @@ export default function TerminalBoard() {
   )
 }
 
-function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
+function NavItem({ icon, label, active, onClick, count }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void, count?: number }) {
   return (
-    <div onClick={onClick} className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${active ? 'bg-ds-indigo-deep text-ds-indigo border border-ds-indigo-border' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} suppressHydrationWarning>
-      {icon} <span className="font-bold hidden md:block">{label}</span>
+    <div onClick={onClick} className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${active ? 'bg-ds-indigo-deep text-ds-indigo border border-ds-indigo-border' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} suppressHydrationWarning>
+      <div className="flex items-center gap-3">
+        {icon} <span className="font-bold hidden md:block">{label}</span>
+      </div>
+      {count !== undefined && count > 0 && (
+        <span className="text-[10px] font-black bg-ds-indigo text-ds-bg px-1.5 py-0.5 rounded-md shadow-lg hidden md:block">{count}</span>
+      )}
     </div>
   )
 }
@@ -606,14 +601,22 @@ function StoreFilter({ name, colorClass, textClass, active, onClick }: { name: s
   )
 }
 
-function WatchButton({ item, isWatched }: { item: StockItem, isWatched: boolean }) {
+function WatchButton({ item, isWatched, currentCount, tier, email }: { item: StockItem, isWatched: boolean, currentCount: number, tier: string | null, email: string }) {
   const [loading, setLoading] = useState(false)
   const handleWatch = async (e: any) => {
     e.stopPropagation()
     if (isWatched || loading) return
+    
+    // Tier-based limits
+    const limit = tier === 'Pro' ? 1000 : 3
+    if (currentCount >= limit) {
+      alert(`LIMIT_REACHED: Your current tier (${tier || 'Standard'}) is capped at ${limit} active alerts. Upgrade to PRO to unlock 1000 slots.`)
+      return
+    }
+
     setLoading(true)
     try {
-      await addDoc(collection(db, "user_alerts"), { user_email: "kea@logic.com", sku_id: item.sku_id, status: 'active', created_at: serverTimestamp(), store: item.store, product_title: item.product_title })
+      await addDoc(collection(db, "user_alerts"), { user_email: email, sku_id: item.sku_id, status: 'active', created_at: serverTimestamp(), store: item.store, product_title: item.product_title })
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }
 
@@ -622,7 +625,7 @@ function WatchButton({ item, isWatched }: { item: StockItem, isWatched: boolean 
     if (loading) return
     setLoading(true)
     try {
-      const q = query(collection(db, "user_alerts"), where("user_email", "==", "kea@logic.com"), where("sku_id", "==", item.sku_id))
+      const q = query(collection(db, "user_alerts"), where("user_email", "==", email), where("sku_id", "==", item.sku_id))
       const snap = await getDocs(q)
       const tasks = snap.docs.map(doc => deleteDoc(doc.ref))
       await Promise.all(tasks)

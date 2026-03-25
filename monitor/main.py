@@ -138,9 +138,19 @@ def trigger_alerts(sku_id, product_title, size_title, slug, alert_type, price=No
     product_link = f"https://www.shelflife.co.za/product/{slug}"
     
     for alert in alerts_query:
-        recipient = alert.to_dict().get('user_email')
+        alert_data = alert.to_dict()
+        recipient = alert_data.get('user_email')
+        
+        # Check user tier (Standard vs Pro)
+        user_doc = db.collection("users").document(recipient).get()
+        user_data = user_doc.to_dict() if user_doc.exists else {"tier": "Standard"}
+        tier = user_data.get("tier", "Standard")
+        
+        logger.info(f"🔔 ALERT TRIGGERED [{tier}]: {recipient} for {product_title}")
+        
         if recipient:
             send_email_alert(recipient, product_title, size_title, product_link, alert_type, price)
+            
         # Status remains active if it's just a price change, triggered if it was a restock
         if alert_type == "RESTOCK":
             alert.reference.update({"status": "triggered"})
