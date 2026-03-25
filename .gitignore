@@ -1,0 +1,23 @@
+# Root .gitignore for SoleNode
+
+# Python / Desktop Monitor
+monitor/build/
+monitor/dist/
+monitor/__pycache__/
+monitor/*.exe
+monitor/*.spec
+monitor/service-account-key.json
+
+# Next.js / Frontend
+sneak-alert/node_modules/
+sneak-alert/.next/
+sneak-alert/.env.local
+sneak-alert/tsconfig.tsbuildinfo
+
+# General
+.env
+.env.local
+.DS_Store
+*.log
+tmp/
+node_modules/

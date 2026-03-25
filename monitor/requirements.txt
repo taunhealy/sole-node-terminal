@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+google-cloud-firestore
+python-dotenv
+curl_cffi
+customtkinter
+undetected-chromedriver
+pyinstaller

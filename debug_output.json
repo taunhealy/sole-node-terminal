@@ -1,0 +1,743 @@
+{
+  "result": {
+    "id": 23518,
+    "title": "Thug Club x adidas Adiform Megaride",
+    "code": "1019401",
+    "status": "active",
+    "slug": "adidas-adiform-megaride",
+    "description": "Shelflife Online Store presents the Thug Club x adidas Adiform Megaride - Core Black/Silver Metallic - KI9522.\r\n\r\nStep into bold street style with the Thug Club x adidas Adiform Megaride, where heritage meets modern urban flair. Featuring a sleek leather upper with iconic 3-Stripes and Trefoil branding, these trainers are designed to make a statement while staying true to adidas Originals\u2019 rebellious spirit.\r\n\r\nBuilt with Cold Cement construction, the Adiform Megaride offers durable comfort for everyday wear. The lace closure ensures a secure fit, while the textile sockliner adds softness against your skin. A rubber outsole provides reliable traction and stability, making these sneakers perfect for city streets, casual outings, or completing your streetwear rotation.",
+    "colour_title": "Core Black/Silver Metallic",
+    "brand_id": 7,
+    "created": "2026-02-09T16:01:29+02:00",
+    "label_id": null,
+    "style_id": 826,
+    "demographic_id": 1,
+    "is_raffle": false,
+    "release_date": "2026-03-25T07:59:57+02:00",
+    "activated": "2026-03-25T07:59:57+02:00",
+    "is_permanent_sale": false,
+    "previous_price": null,
+    "exclusive": false,
+    "is_limited_to_one_unit": false,
+    "use_pixelated_font": false,
+    "show_on_launch_page": true,
+    "synonyms": null,
+    "marked_down": false,
+    "sell_on_web": true,
+    "fab_options": [
+      {
+        "id": 24,
+        "fab_id": 9,
+        "title": "True to Size",
+        "code": "9db10fb84d3c238153a3222c3d918dbe",
+        "is_filter": true,
+        "created": "2025-08-20T00:49:59+02:00",
+        "modified": "2025-08-20T00:49:59+02:00",
+        "deleted": null,
+        "_joinData": {
+          "id": 17733,
+          "fab_option_id": 24,
+          "product_id": 23518
+        },
+        "fab": {
+          "id": 9,
+          "title": "Fit",
+          "code": "01e49ee7364d951a3d1bdea7dd3a1b7b",
+          "is_filter": true,
+          "elasticsearch_display_order": null,
+          "created": "2025-08-20T00:49:59+02:00",
+          "modified": "2025-08-20T00:49:59+02:00",
+          "deleted": null
+        }
+      },
+      {
+        "id": 37,
+        "fab_id": 10,
+        "title": "Leather",
+        "code": "6f65f89959da2f75733478d69636b96a",
+        "is_filter": true,
+        "created": "2025-08-20T00:49:59+02:00",
+        "modified": "2025-08-20T00:49:59+02:00",
+        "deleted": null,
+        "_joinData": {
+          "id": 17734,
+          "fab_option_id": 37,
+          "product_id": 23518
+        },
+        "fab": {
+          "id": 10,
+          "title": "Upper Type",
+          "code": "7750b6abd404c8f61e5e5cc9f7f10671",
+          "is_filter": true,
+          "elasticsearch_display_order": null,
+          "created": "2025-08-20T00:49:59+02:00",
+          "modified": "2025-08-20T00:49:59+02:00",
+          "deleted": null
+        }
+      }
+    ],
+    "skus": [
+      {
+        "id": 121299,
+        "code": "0086159",
+        "soh": 1,
+        "soh_reserved": 0,
+        "in_store_stock": 2,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 9,
+          "title": "6",
+          "displayed_title": "6"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 1,
+        "title": "6 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      },
+      {
+        "id": 121300,
+        "code": "0086160",
+        "soh": 1,
+        "soh_reserved": 0,
+        "in_store_stock": 2,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 7,
+          "title": "7",
+          "displayed_title": "7"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 1,
+        "title": "7 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      },
+      {
+        "id": 121301,
+        "code": "0086162",
+        "soh": 2,
+        "soh_reserved": 0,
+        "in_store_stock": 4,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 13,
+          "title": "9",
+          "displayed_title": "9"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 2,
+        "title": "9 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      },
+      {
+        "id": 121302,
+        "code": "0086161",
+        "soh": 2,
+        "soh_reserved": 0,
+        "in_store_stock": 4,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 28,
+          "title": "8",
+          "displayed_title": "8"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 2,
+        "title": "8 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      },
+      {
+        "id": 121303,
+        "code": "0086164",
+        "soh": 1,
+        "soh_reserved": 0,
+        "in_store_stock": 2,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 39,
+          "title": "11",
+          "displayed_title": "11"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 1,
+        "title": "11 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      },
+      {
+        "id": 121304,
+        "code": "0086163",
+        "soh": 1,
+        "soh_reserved": 0,
+        "in_store_stock": 2,
+        "price": 3499.9,
+        "was_price": 3499.9,
+        "product_id": 23518,
+        "has_had_stock": true,
+        "variant_code": "1019401-Blac",
+        "size": {
+          "id": 40,
+          "title": "10",
+          "displayed_title": "10"
+        },
+        "promotion_products": [],
+        "colour": {
+          "id": 7,
+          "title": "Black",
+          "code": "Blac",
+          "hexes": [
+            {
+              "id": 4,
+              "title": "Black",
+              "value": "000",
+              "_joinData": {
+                "id": 4,
+                "hex_id": 4,
+                "colour_id": 7
+              }
+            }
+          ],
+          "first_hex": "000",
+          "name": "black",
+          "original_title": "Black"
+        },
+        "stock_available": 1,
+        "title": "10 - Black",
+        "is_low_stock": false,
+        "is_promotion": false,
+        "promo_price": 3499.9
+      }
+    ],
+    "cowhills_promotions": [],
+    "categories": [
+      {
+        "id": 5,
+        "title": "Sneakers",
+        "parent_id": 1,
+        "_joinData": {
+          "id": 6042,
+          "category_id": 5,
+          "product_id": 23518
+        },
+        "parent_category": {
+          "title": "Footwear"
+        },
+        "ProductsCategories": {
+          "product_id": 23518
+        },
+        "hierarchy": [
+          "Footwear",
+          "Sneakers"
+        ]
+      }
+    ],
+    "images": [
+      {
+        "id": 93641,
+        "path": "assets/1019401_1019401-Blac_01.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_01.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": true
+      },
+      {
+        "id": 93642,
+        "path": "assets/1019401_1019401-Blac_02.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_02.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_02.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_02.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93643,
+        "path": "assets/1019401_1019401-Blac_03.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_03.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_03.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_03.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93644,
+        "path": "assets/1019401_1019401-Blac_04.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_04.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_04.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_04.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93645,
+        "path": "assets/1019401_1019401-Blac_05.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_05.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_05.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_05.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93646,
+        "path": "assets/1019401_1019401-Blac_06.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_06.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_06.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_06.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93647,
+        "path": "assets/1019401_1019401-Blac_07.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_07.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_07.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_07.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93648,
+        "path": "assets/1019401_1019401-Blac_08.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_08.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_08.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_08.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      }
+    ],
+    "style": {
+      "id": 826,
+      "title": "adidas Adiform Megaride"
+    },
+    "labels": [
+      {
+        "id": 3,
+        "title": "New in",
+        "_joinData": {
+          "id": 4874808,
+          "product_id": 23518,
+          "label_id": 3
+        }
+      }
+    ],
+    "demographic": {
+      "id": 1,
+      "title": "Men"
+    },
+    "pack_display_products": [],
+    "packs": [
+      {
+        "is_display_single_product": false,
+        "id": 1771,
+        "_joinData": {
+          "id": 9850,
+          "product_id": 23518,
+          "pack_id": 1771
+        },
+        "listing_properties": [],
+        "is_promo_or_permanent_promo": false
+      }
+    ],
+    "brand": {
+      "id": 7,
+      "title": "adidas",
+      "slug": "adidas",
+      "brand_code": "ADID"
+    },
+    "primary_image": {
+      "id": 93641,
+      "path": "assets/1019401_1019401-Blac_01.jpg",
+      "product_id": 23518,
+      "colour_id": null,
+      "sku_variant_code": "1019401-Blac",
+      "original_filename": "1019401_1019401-Blac_01.jpg",
+      "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+      "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+      "colour_code": "blac",
+      "is_colour_first_image": true
+    },
+    "sorted_images_by_stock": [
+      {
+        "id": 93641,
+        "path": "assets/1019401_1019401-Blac_01.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_01.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_01.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": true
+      },
+      {
+        "id": 93642,
+        "path": "assets/1019401_1019401-Blac_02.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_02.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_02.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_02.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93643,
+        "path": "assets/1019401_1019401-Blac_03.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_03.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_03.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_03.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93644,
+        "path": "assets/1019401_1019401-Blac_04.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_04.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_04.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_04.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93645,
+        "path": "assets/1019401_1019401-Blac_05.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_05.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_05.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_05.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93646,
+        "path": "assets/1019401_1019401-Blac_06.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_06.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_06.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_06.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93647,
+        "path": "assets/1019401_1019401-Blac_07.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_07.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_07.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_07.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      },
+      {
+        "id": 93648,
+        "path": "assets/1019401_1019401-Blac_08.jpg",
+        "product_id": 23518,
+        "colour_id": null,
+        "sku_variant_code": "1019401-Blac",
+        "original_filename": "1019401_1019401-Blac_08.jpg",
+        "cdn_path": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_scale,dpr_auto,f_auto,q_100,w_auto/v1575961299/assets/1019401_1019401-Blac_08.jpg",
+        "cdn_path_colour_thumb": "https://res.cloudinary.com/shelflife-online/image/upload/a_0,c_fill,f_auto,q_100,w_58/v1575961299/assets/1019401_1019401-Blac_08.jpg",
+        "colour_code": "blac",
+        "is_colour_first_image": false
+      }
+    ],
+    "price": 3499.9,
+    "full_title": "adidas - Thug Club x adidas Adiform Megaride",
+    "promo_price": null,
+    "was_price": 3499.9,
+    "is_promotion": false,
+    "is_on_cowhills_promo": false,
+    "first_active_cowhills_promo_description": null,
+    "formatted_price": "R\u00a03\u00a0499,9",
+    "is_released": true,
+    "has_purchasable_skus": true,
+    "stock_available": 8,
+    "skus_in_stock": 8,
+    "is_displayable": null,
+    "is_promo_or_permanent_promo": false,
+    "is_just_dropped": true,
+    "promo_online_only": false,
+    "has_images": true,
+    "has_stock": 1,
+    "deepest_category": null,
+    "stripped_bullets": "",
+    "is_on_promotion": 0,
+    "is_coming_soon": false,
+    "is_new_in": true,
+    "is_on_sale": false,
+    "is_exclusive": false,
+    "is_last_pair": false,
+    "is_active": true,
+    "is_stockable": true,
+    "dynamic_label_title": "New in",
+    "category_hierarchy": "",
+    "title_with_no_spaces": "ThugClubxadidasAdiformMegaride",
+    "title_permutations": "ThugClubxadidasAdiformMegaride ClubxadidasAdiformMegaride xadidasAdiformMegaride adidasAdiformMegaride AdiformMegaride Megaride ",
+    "is_not_hidden_pack_product": true,
+    "is_pack_product": false,
+    "product_code_for_google_feed": "C1019401",
+    "url": "https://www.shelflife.co.za/product/adidas-adiform-megaride",
+    "first_sku_in_stock": {
+      "id": 121299,
+      "code": "0086159",
+      "soh": 1,
+      "soh_reserved": 0,
+      "in_store_stock": 2,
+      "price": 3499.9,
+      "was_price": 3499.9,
+      "product_id": 23518,
+      "has_had_stock": true,
+      "variant_code": "1019401-Blac",
+      "size": {
+        "id": 9,
+        "title": "6",
+        "displayed_title": "6"
+      },
+      "promotion_products": [],
+      "colour": {
+        "id": 7,
+        "title": "Black",
+        "code": "Blac",
+        "hexes": [
+          {
+            "id": 4,
+            "title": "Black",
+            "value": "000",
+            "_joinData": {
+              "id": 4,
+              "hex_id": 4,
+              "colour_id": 7
+            }
+          }
+        ],
+        "first_hex": "000",
+        "name": "black",
+        "original_title": "Black"
+      },
+      "stock_available": 1,
+      "title": "6 - Black",
+      "is_low_stock": false,
+      "is_promotion": false,
+      "promo_price": 3499.9
+    },
+    "no_stock_skus": [],
+    "is_gift_card_product": false,
+    "in_store_available_stock": 16,
+    "search_title": "Thug Club x adidas Adiform Megaride Core Black/Silver Metallic",
+    "categories_hierarchy": [
+      {
+        "id": 1,
+        "parent_id": null,
+        "demographic_id": null,
+        "active": true,
+        "featured": false,
+        "lft": 1,
+        "rght": 12,
+        "level": 0,
+        "sort_order": 1,
+        "title": "Footwear",
+        "slug": "footwear",
+        "submenu_template": "submenu_1",
+        "image_url": "/packs/view/willy-chavarria-x-adidas-megaride",
+        "image_text": "Willy Chavarria x adidas Megaride AG",
+        "meta_description": "Shelflife Footwear",
+        "meta_title": "Shelflife Footwear",
+        "show_on_kiosk_homepage": false,
+        "kiosk_homepage_order": 999,
+        "created": "2019-09-06T08:05:33+02:00",
+        "modified": "2026-01-30T11:24:27+02:00",
+        "deleted": null
+      },
+      {
+        "id": 5,
+        "parent_id": 1,
+        "demographic_id": null,
+        "active": true,
+        "featured": false,
+        "lft": 2,
+        "rght": 3,
+        "level": 1,
+        "sort_order": 1,
+        "title": "Sneakers",
+        "slug": "sneakers",
+        "submenu_template": null,
+        "image_url": "",
+        "image_text": "",
+        "meta_description": "Sneakers",
+        "meta_title": "Sneakers",
+        "show_on_kiosk_homepage": false,
+        "kiosk_homepage_order": 999,
+        "created": "2019-09-06T08:44:43+02:00",
+        "modified": "2023-11-13T16:58:35+02:00",
+        "deleted": null
+      }
+    ],
+    "indexed_at": "2026-03-25T08:00:16+02:00"
+  },
+  "highlights": []
+}

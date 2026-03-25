@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ds-bg: #101217;
+  --color-ds-surface: #171920;
+  --color-ds-border: #1c2128;
+  --color-ds-green: #00C853;
+  --color-ds-red: #FF3D00;
+  --color-ds-blue: #3a86ff;
+  --color-ds-text-dim: #8b8e94;
+}
+
+:root {
+  --background: #101217;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: var(--color-ds-bg);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-ds-border);
+  }
+}
+
+/* DexScreener Style Table Reset */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-ds-text-dim);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-ds-border);
+}
+
+td {
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-ds-border);
+}
+
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
