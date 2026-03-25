@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "user_alerts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_email", "order": "ASCENDING" },
+        { "fieldPath": "sku_id", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

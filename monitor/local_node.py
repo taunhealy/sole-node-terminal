@@ -4,6 +4,7 @@ import logging
 import sys
 from curl_cffi import requests
 from google.cloud import firestore
+import undetected_chromedriver as uc
 
 # Force Local Service Account Credentials 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.path.dirname(__file__), "service-account-key.json")
@@ -15,311 +16,157 @@ logger = logging.getLogger("LOCAL_NODE")
 db = firestore.Client()
 
 def run_monitor_check():
+    """Shelflife Monitor (Custom API View)"""
     target_url = "https://www.shelflife.co.za/products.json"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
-        "Referer": "https://www.shelflife.co.za/products",
-        "Accept-Language": "en-ZA,en;q=0.9"
+        "Referer": "https://www.shelflife.co.za/products"
     }
-
-    logger.info(f"🔄 Requesting {target_url}...")
     try:
         response = requests.get(target_url, headers=headers, timeout=20, impersonate="chrome110")
-        logger.info(f"📥 Received Status: {response.status_code}")
-        
-        if response.status_code != 200:
-            logger.error(f"❌ Monitor Blocked: {response.text[:200]}")
-            return
+        if response.status_code != 200: return
+        results = response.json().get('results', {}).get('results', [])
+        for product_entry in results:
+            p = product_entry.get('result', {})
+            title = p.get('title', 'Unknown')
+            color = p.get('color') or '—'
+            if color == '—':
+                tl = title.lower()
+                if "black" in tl or "blk" in tl: color = "Black"
+                elif "white" in tl or "wht" in tl: color = "White"
             
-        data = response.json()
-    except Exception as e:
-        logger.error(f"❌ Fetch/Parse Error ({type(e).__name__}): {e}")
-        return
-
-    # Parse Products
-    res_obj = data.get('results', {})
-    results = res_obj.get('results', [])
-    logger.info(f"📡 Processing {len(results)} items from Shelflife...")
-
-    count = 0
-    for product_entry in results:
-        p = product_entry.get('result', {})
-        if count == 0:
-            logger.info(f"Available Product Fields: {list(p.keys())}")
-        
-        product_title = p.get('title', 'Unknown Product')
-        slug = p.get('slug', '')
-        
-        raw_price = p.get('price', '0')
-        try:
-           current_price = float(raw_price.replace('R', '').replace(',', '').strip())
-        except:
-           current_price = 0
-        
-        skus = p.get('skus', [])
-        
-        for sku in skus:
-            sku_id = str(sku.get('id'))
-            size_title = sku.get('size_title', 'N/A')
-            current_soh = int(sku.get('soh', 0))
+            labels = p.get('labels', [])
+            is_excl = any("Exclusive" in str(l) for l in labels)
             
-            stock_ref = db.collection("stock").document(sku_id)
-            doc = stock_ref.get()
-            
-            if doc.exists:
-                old_state = doc.to_dict()
-                old_soh = old_state.get('soh', 0)
-                old_price = old_state.get('current_price', current_price)
+            for sku in (p.get('skus') or []):
+                sku_id = str(sku.get('id', ''))
+                if not sku_id: continue
+                size = sku.get('size_title') or (sku.get('size') or {}).get('title') or 'N/A'
+                try: val = float(str(sku.get('price') or p.get('price')).replace('R','').replace(',','').strip())
+                except: val = 0
                 
-                # RESTOCK DETECTED
-                if current_soh > 0 and old_soh == 0:
-                    logger.info(f"🔥 RESTOCK: {product_title} ({size_title})")
-                    db.collection("restock_logs").add({
-                        "type": "RESTOCK",
-                        "sku_id": sku_id,
-                        "product_title": product_title,
-                        "size_title": size_title,
-                        "quantity_added": current_soh,
-                        "detected_at": firestore.SERVER_TIMESTAMP
-                    })
-                    
-                    stock_ref.update({
-                        "restocked_at": firestore.SERVER_TIMESTAMP
-                    })
-
-                # SALE DETECTED
-                if current_price < old_price and current_price > 0:
-                    logger.info(f"📉 SALE: {product_title} dropped to {raw_price}!")
-                    db.collection("restock_logs").add({
-                        "type": "SALE",
-                        "sku_id": sku_id,
-                        "product_title": product_title,
-                        "size_title": size_title,
-                        "price_at_event": raw_price,
-                        "detected_at": firestore.SERVER_TIMESTAMP
-                    })
-
-                stock_ref.update({
-                    "soh": current_soh,
-                    "current_price": current_price,
-                    "last_updated": firestore.SERVER_TIMESTAMP,
-                    "store": "Shelflife"
-                })
-            else:
-                stock_ref.set({
-                    "sku_id": sku_id,
-                    "product_title": product_title,
-                    "size_title": size_title,
-                    "soh": current_soh,
-                    "current_price": current_price,
-                    "original_price": current_price,
-                    "last_updated": firestore.SERVER_TIMESTAMP,
-                    "created_at": firestore.SERVER_TIMESTAMP,
-                    "store": "Shelflife"
-                })
-            count += 1
-            
-    logger.info(f"✅ Synced {count} SKU sizes from Shelflife to Firestore.\n")
+                ref = db.collection("stock").document(sku_id)
+                ref.set({
+                    "sku_id": sku_id, "product_title": title, "size_title": size, "color": color,
+                    "soh": int(sku.get('soh', 0)), "current_price": val, "store": "Shelflife",
+                    "is_exclusive": is_excl,
+                    "url": p.get('url', ''), "last_updated": firestore.SERVER_TIMESTAMP
+                }, merge=True)
+    except Exception as e: logger.error(f"Shelflife Sync Error: {e}")
 
 def scrape_lemkus():
-    target_url = "https://www.lemkus.com/products.json?limit=250"
-    logger.info(f"🔄 Requesting {target_url}...")
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json"
-    }
-    
+    """Jack Lemkus (Shopify)"""
+    url = "https://www.lemkus.com/products.json?limit=250"
     try:
-        response = requests.get(target_url, headers=headers, timeout=20, impersonate="chrome110")
-        if response.status_code != 200:
-            logger.error(f"❌ Monitor Blocked (Lemkus): {response.text[:200]}")
-            return
-        data = response.json()
-    except Exception as e:
-        logger.error(f"❌ Error fetching Lemkus: {e}")
-        return
-
-    products = data.get('products', [])
-    logger.info(f"📡 Processing {len(products)} items from Jack Lemkus...")
-    
-    count = 0
-    for p in products:
-        product_title = p.get('title', 'Unknown Product')
-        variants = p.get('variants', [])
-        
-        for v in variants:
-            sku_id = str(v.get('id', ''))
-            if not sku_id: continue
+        r = requests.get(url, impersonate="chrome110")
+        if r.status_code != 200: return
+        for p in r.json().get('products', []):
+            title = p.get('title', 'Unknown')
+            opts = p.get('options', [])
+            c_idx, s_idx = -1, -1
+            for i, o in enumerate(opts):
+                on = o.get('name','').lower()
+                if 'color' in on: c_idx = i
+                if 'size' in on: s_idx = i
             
-            size_title = str(v.get('title', 'N/A'))
-            
-            # Default to 1 if available, otherwise 0
-            is_available = v.get('available', False)
-            current_soh = 1 if is_available else 0
-            
-            # Price
-            raw_price = v.get('price', '0')
-            try:
-                current_price = float(raw_price)
-            except:
-                current_price = 0
+            for v in p.get('variants', []):
+                color, size = "—", v.get('title', 'N/A')
+                vopts = [v.get('option1'), v.get('option2'), v.get('option3')]
+                if c_idx != -1 and vopts[c_idx]: color = vopts[c_idx]
+                if s_idx != -1 and vopts[s_idx]: size = vopts[s_idx]
                 
-            raw_original = v.get('compare_at_price', None)
-            try:
-                original_price = float(raw_original) if raw_original else current_price
-            except:
-                original_price = current_price
-                
-            # DB logic
-            stock_ref = db.collection("stock").document(sku_id)
-            doc = stock_ref.get()
-            
-            if doc.exists:
-                old_state = doc.to_dict()
-                old_soh = old_state.get('soh', 0)
-                old_price = old_state.get('current_price', current_price)
-                
-                # RESTOCK DETECTED
-                if current_soh > 0 and old_soh == 0:
-                    logger.info(f"🔥 RESTOCK (Lemkus): {product_title} ({size_title})")
-                    db.collection("restock_logs").add({
-                        "type": "RESTOCK",
-                        "sku_id": sku_id,
-                        "product_title": product_title,
-                        "size_title": size_title,
-                        "quantity_added": current_soh,
-                        "detected_at": firestore.SERVER_TIMESTAMP
-                    })
-                    
-                    stock_ref.update({
-                        "restocked_at": firestore.SERVER_TIMESTAMP
-                    })
-
-                # SALE DETECTED
-                if current_price < old_price and current_price > 0:
-                    logger.info(f"📉 SALE (Lemkus): {product_title} dropped to {current_price}!")
-                    db.collection("restock_logs").add({
-                        "type": "SALE",
-                        "sku_id": sku_id,
-                        "product_title": product_title,
-                        "size_title": size_title,
-                        "price_at_event": current_price,
-                        "detected_at": firestore.SERVER_TIMESTAMP
-                    })
-
-                stock_ref.update({
-                    "soh": current_soh,
-                    "current_price": current_price,
-                    "last_updated": firestore.SERVER_TIMESTAMP,
-                    "store": "Jack Lemkus"
-                })
-            else:
-                stock_ref.set({
-                    "sku_id": sku_id,
-                    "product_title": product_title,
-                    "size_title": size_title,
-                    "soh": current_soh,
-                    "current_price": current_price,
-                    "original_price": original_price,
-                    "last_updated": firestore.SERVER_TIMESTAMP,
-                    "created_at": firestore.SERVER_TIMESTAMP,
-                    "store": "Jack Lemkus"
-                })
-            count += 1
-            
-    logger.info(f"✅ Synced {count} SKU sizes from Jack Lemkus to Firestore.\n")
+                ref = db.collection("stock").document(str(v.get('id')))
+                ref.set({
+                    "sku_id": str(v.get('id')), "product_title": title, "size_title": size, "color": color,
+                    "soh": 1 if v.get('available') else 0, "current_price": float(v.get('price', 0)),
+                    "store": "Jack Lemkus", "url": f"https://www.lemkus.com/products/{p.get('handle')}",
+                    "last_updated": firestore.SERVER_TIMESTAMP
+                }, merge=True)
+    except Exception as e: logger.error(f"Lemkus Sync Error: {e}")
 
 def scrape_archive():
-    # Bloomreach search API for Archive (Bash.com)
-    target_url = "https://web-api.bash.com/v1/search/bloomreach?page=1&pageSize=100&orderBy=OrderByReleaseDateDESC&text=sneakers&persistentFilters=store%3AArchive"
-    logger.info(f"🔄 Requesting {target_url}...")
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "Accept": "application/json"
-    }
-    
+    """Archive (VTEX)"""
+    search_url = "https://web-api.bash.com/v1/search/bloomreach?page=1&pageSize=40&orderBy=OrderByReleaseDateDESC&text=sneakers&persistentFilters=store%3AArchive"
     try:
-        response = requests.get(target_url, headers=headers, timeout=20, impersonate="chrome110")
-        if response.status_code != 200:
-            logger.error(f"❌ Monitor Blocked (Archive): {response.status_code}")
-            return
-        data = response.json()
-    except Exception as e:
-        logger.error(f"❌ Error fetching Archive: {e}")
-        return
+        r = requests.get(search_url, impersonate="chrome110")
+        if r.status_code != 200: return
+        items = r.json().get('data', {}).get('items', [])
+        ids = [str(i.get('vtex_id') or i.get('id')) for i in items if i]
+        meta = {str(i.get('vtex_id') or i.get('id')): i for i in items if i}
+        
+        for i in range(0, len(ids), 10):
+            batch = ids[i:i+10]
+            fq = "&".join([f"fq=productId:{bid}" for bid in batch])
+            vr = requests.get(f"https://bash.com/api/catalog_system/pub/products/search?{fq}", impersonate="chrome110")
+            if vr.status_code == 200:
+                for vp in vr.json():
+                    m = meta.get(str(vp.get('productId')), {})
+                    for itm in vp.get('items', []):
+                        offer = itm.get('sellers', [{}])[0].get('commertialOffer', {})
+                        soh_val = int(offer.get('AvailableQuantity', 0))
+                        if soh_val > 99: soh_val = 99
+                        
+                        is_excl = "Exclusive" in (m.get('name') or "")
+                        
+                        ref = db.collection("stock").document(str(itm.get('itemId')))
+                        ref.set({
+                            "sku_id": str(itm.get('itemId')), "product_title": m.get('name'), "size_title": str(itm.get('Size', ['Multi'])[0]),
+                            "color": m.get('baseColor', '—'), "soh": soh_val, "is_exclusive": is_excl,
+                            "current_price": float(offer.get('Price', 0)), "store": "Archive",
+                            "url": f"https://bash.com{m.get('url')}", "last_updated": firestore.SERVER_TIMESTAMP
+                        }, merge=True)
+    except Exception as e: logger.error(f"Archive Sync Error: {e}")
 
-    items = data.get('data', {}).get('items', [])
-    logger.info(f"📡 Processing {len(items)} items from Archive.co.za...")
-    
-    count = 0
-    for item in items:
-        product_title = item.get('name', 'Unknown Product')
-        sku_id = item.get('vtex_id') or item.get('id')
-        if not sku_id: continue
+def scrape_amazon():
+    """Amazon.co.za (Timberland & Puma)"""
+    logger.info("🔍 Stealth Sweep: Amazon.co.za (Timberland / Puma)...")
+    try:
+        options = uc.ChromeOptions()
+        options.add_argument('--headless=new')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        driver = uc.Chrome(options=options)
         
-        # Bash API often represents price in cents
-        raw_price_cents = item.get('sellingPrice', 0)
-        current_price = raw_price_cents / 100.0
-        
-        # We don't have variants in this specific search API view, so we treat it as a single SKU. 
-        # For a full implementation, we'd fetch the product detail page, but for now we track the main product availability.
-        current_soh = 1 # Search results usually imply stock unless explicitly marked
-        
-        stock_ref = db.collection("stock").document(str(sku_id))
-        doc = stock_ref.get()
-        
-        if doc.exists:
-            old_state = doc.to_dict()
-            old_price = old_state.get('current_price', current_price)
+        keywords = ["timberland", "puma sneakers"]
+        for kw in keywords:
+            url = f"https://www.amazon.co.za/s?k={kw.replace(' ', '+')}"
+            driver.get(url)
+            time.sleep(6)
             
-            if current_price < old_price and current_price > 0:
-                logger.info(f"📉 SALE (Archive): {product_title} dropped to R{current_price}!")
-                db.collection("restock_logs").add({
-                    "type": "SALE",
-                    "sku_id": str(sku_id),
-                    "product_title": product_title,
-                    "price_at_event": f"R{current_price}",
-                    "detected_at": firestore.SERVER_TIMESTAMP
-                })
-
-            stock_ref.update({
-                "soh": current_soh,
-                "current_price": current_price,
-                "last_updated": firestore.SERVER_TIMESTAMP,
-                "store": "Archive"
-            })
-        else:
-            stock_ref.set({
-                "sku_id": str(sku_id),
-                "product_title": product_title,
-                "size_title": "Multi-Size",
-                "soh": current_soh,
-                "current_price": current_price,
-                "original_price": current_price,
-                "last_updated": firestore.SERVER_TIMESTAMP,
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "store": "Archive"
-            })
-        count += 1
+            items = driver.execute_script("""
+                const res = [];
+                document.querySelectorAll('.s-result-item[data-asin]').forEach(el => {
+                    const t = el.querySelector('h2 a span')?.innerText;
+                    const p = el.querySelector('.a-price .a-offscreen')?.innerText || el.querySelector('.a-price-whole')?.innerText;
+                    const u = el.querySelector('h2 a')?.href;
+                    const id = el.getAttribute('data-asin');
+                    if(t && p && id && id.length > 5) res.push({ t, p, u, id });
+                });
+                return res;
+            """) or []
             
-    logger.info(f"✅ Synced {count} items from Archive to Firestore.\n")
+            for itm in items:
+                try: price = float(str(itm['p']).replace('R','').replace(',','').replace(' ','').strip())
+                except: price = 0
+                sid = f"AMZN_{itm['id']}"
+                db.collection("stock").document(sid).set({
+                    "sku_id": sid, "product_title": itm['t'], "size_title": "Multi", "color": "—",
+                    "soh": 1, "current_price": price, "store": "Amazon", "url": itm['u'],
+                    "last_updated": firestore.SERVER_TIMESTAMP
+                }, merge=True)
+        driver.quit()
+    except Exception as e: logger.error(f"Amazon Sync Error: {e}")
 
 def start_daemon():
-    logger.info("🚀 Starting SoleNode.io Local Node Daemon...")
-    logger.info("🛡️ Using residential IP to bypass Cloudflare. Database sync is active.")
-    
+    logger.info("🚀 SoleNode Local Monitor v1.6 Deep Scrape Start...")
     while True:
-        logger.info("⏳ Initiating Monitor Cycle...")
         try:
-            run_monitor_check()  # Shelflife
-            scrape_lemkus()      # Jack Lemkus
-            scrape_archive()     # Archive
-        except Exception as e:
-            logger.error(f"Critical Node Error: {e}")
-        
-        logger.info("💤 Cycle complete. Sweeping again in 60 seconds...\n")
-        time.sleep(60)
+            run_monitor_check()
+            scrape_lemkus()
+            scrape_archive()
+            scrape_amazon()
+        except Exception as e: logger.error(f"Daemon Error: {e}")
+        time.sleep(120)
 
 if __name__ == "__main__":
     start_daemon()
