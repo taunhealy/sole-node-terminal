@@ -93,7 +93,7 @@ export default function TerminalBoard() {
   // Header Filter State
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [sizeFilters, setSizeFilters] = useState<string[]>([])
-  const [storeFilters, setStoreFilters] = useState<string[]>(['Shelflife', 'Jack Lemkus', 'Archive', 'Amazon', 'Cape Union Mart'])
+  const [storeFilters, setStoreFilters] = useState<string[]>(['Shelflife', 'Jack Lemkus', 'Archive', 'Cape Union Mart'])
   const [visibleCount, setVisibleCount] = useState(50)
   const [genderFilter, setGenderFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
@@ -289,11 +289,10 @@ export default function TerminalBoard() {
           <div className="h-px bg-ds-border my-4 mx-2" />
           <p className="px-4 py-2 text-[10px] font-black uppercase text-ds-text-dim hidden md:block">Stores</p>
           
-          <StoreFilter name="Shelflife" colorClass="bg-ds-orange" active={storeFilters.includes('Shelflife')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Shelflife') ? pv.filter(s => s !== 'Shelflife') : [...pv, 'Shelflife'])} />
-          <StoreFilter name="Jack Lemkus" colorClass="bg-yellow-500" active={storeFilters.includes('Jack Lemkus')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Jack Lemkus') ? pv.filter(s => s !== 'Jack Lemkus') : [...pv, 'Jack Lemkus'])} />
+          <StoreFilter name="Shelflife" colorClass="bg-ds-orange" textClass="text-ds-orange" active={storeFilters.includes('Shelflife')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Shelflife') ? pv.filter(s => s !== 'Shelflife') : [...pv, 'Shelflife'])} />
+          <StoreFilter name="Jack Lemkus" colorClass="bg-yellow-500" textClass="text-yellow-500" active={storeFilters.includes('Jack Lemkus')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Jack Lemkus') ? pv.filter(s => s !== 'Jack Lemkus') : [...pv, 'Jack Lemkus'])} />
           <StoreFilter name="Archive" colorClass="bg-white" active={storeFilters.includes('Archive')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Archive') ? pv.filter(s => s !== 'Archive') : [...pv, 'Archive'])} />
-          <StoreFilter name="Amazon" colorClass="bg-yellow-400" active={storeFilters.includes('Amazon')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Amazon') ? pv.filter(s => s !== 'Amazon') : [...pv, 'Amazon'])} />
-          <StoreFilter name="Cape Union Mart" colorClass="bg-ds-orange-border" active={storeFilters.includes('Cape Union Mart')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Cape Union Mart') ? pv.filter(s => s !== 'Cape Union Mart') : [...pv, 'Cape Union Mart'])} />
+          <StoreFilter name="Cape Union Mart" colorClass="bg-purple-500" textClass="text-purple-500" active={storeFilters.includes('Cape Union Mart')} onClick={() => setStoreFilters((pv: string[]) => pv.includes('Cape Union Mart') ? pv.filter(s => s !== 'Cape Union Mart') : [...pv, 'Cape Union Mart'])} />
         </nav>
       </aside>
 
@@ -309,7 +308,7 @@ export default function TerminalBoard() {
                 <button 
                   onClick={() => {
                     setSearchTerm(''); setSizeFilters([]); setGenderSort(null); setPriceSort(null); setInventorySort(null);
-                    setGenderFilter(null); setTypeFilter(null); setOnlyExclusives(false); setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Amazon', 'Cape Union Mart'])
+                    setGenderFilter(null); setTypeFilter(null); setOnlyExclusives(false); setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Cape Union Mart'])
                   }}
                   className="px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-md text-[9px] font-black text-red-500 uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg"
                 >
@@ -318,10 +317,34 @@ export default function TerminalBoard() {
               )}
               {searchTerm && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-ds-indigo-deep border border-ds-indigo-border rounded-md text-[9px] font-black text-ds-indigo uppercase tracking-widest shrink-0 shadow-[0_0_10px_rgba(49,46,129,0.2)]">
+                  <Search className="w-2.5 h-2.5" />
                   <span>Search: {searchTerm}</span>
                   <X className="w-2.5 h-2.5 cursor-pointer hover:text-white transition-colors" onClick={() => setSearchTerm('')} />
                 </div>
               )}
+              <div className="flex flex-wrap gap-2">
+                {storeFilters.map(store => (
+                  <div key={store} className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-md text-[9px] font-black uppercase tracking-widest shrink-0 group hover:border-white/30 transition-all">
+                    <span className={`w-1 h-1 rounded-full ${
+                      store === 'Shelflife' ? 'bg-ds-orange' :
+                      store === 'Jack Lemkus' ? 'bg-yellow-500' :
+                      store === 'Archive' ? 'bg-white' :
+                      store === 'Cape Union Mart' ? 'bg-purple-500' :
+                      'bg-ds-orange-border'
+                    }`} />
+                    <span className={
+                      store === 'Shelflife' ? 'text-ds-orange' : 
+                      store === 'Jack Lemkus' ? 'text-yellow-500' :
+                      store === 'Cape Union Mart' ? 'text-purple-500' :
+                      'text-ds-text-dim'
+                    }>{store}</span>
+                    <X 
+                      className="w-2.5 h-2.5 cursor-pointer hover:text-white transition-colors opacity-0 group-hover:opacity-100 text-ds-text-dim" 
+                      onClick={() => setStoreFilters(prev => prev.filter(s => s !== store))} 
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           <div className="flex items-center gap-4">
             <button 
@@ -376,6 +399,7 @@ export default function TerminalBoard() {
               <thead className="sticky top-0 bg-ds-surface z-10 text-[10px] font-black uppercase tracking-widest">
                 <tr className="border-b border-white/5">
                    <th className="px-6 py-4 text-left min-w-[340px] text-ds-text-dim">Product / SKU</th>
+                   <th className="px-4 py-4 text-center w-[120px] text-ds-text-dim">Upload Date</th>
                    <th className="px-2 py-4 text-center w-[100px] relative text-ds-text-dim">
                       <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'size' ? null : 'size')}>
                         Size
@@ -407,10 +431,10 @@ export default function TerminalBoard() {
                       </div>
                       <FilterDropdown 
                         isOpen={activeFilter === 'store'} 
-                        options={['Shelflife', 'Jack Lemkus', 'Archive', 'Amazon', 'Cape Union Mart']} 
+                        options={['Shelflife', 'Jack Lemkus', 'Archive', 'Cape Union Mart']} 
                         selected={storeFilters} 
                         onToggle={(v: string) => setStoreFilters((pv: string[]) => pv.includes(v) ? pv.filter(x => x !== v) : [...pv, v])} 
-                        onClear={() => { setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Amazon', 'Cape Union Mart']); setActiveFilter(null); }}
+                        onClear={() => { setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Cape Union Mart']); setActiveFilter(null); }}
                       />
                    </th>
                    <th className="px-4 py-4 text-right w-[120px] relative text-ds-text-dim">
@@ -473,6 +497,11 @@ export default function TerminalBoard() {
                         <span className="text-[10px] text-ds-text-dim font-black">{item.sku_id}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                       <span className="text-[10px] font-black uppercase text-ds-text-dim tracking-tighter" suppressHydrationWarning>
+                          {item.created_at ? new Date(item.created_at?.seconds * 1000).toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' }) : '—'}
+                       </span>
+                    </td>
                     <td className="px-2 py-4 text-center">
                       <div className="flex items-center justify-center gap-2 group/size">
                         <SizeBadge size={s} />
@@ -491,8 +520,7 @@ export default function TerminalBoard() {
                         item.store === 'Shelflife' ? 'text-ds-orange' :
                         item.store === 'Jack Lemkus' ? 'text-yellow-500' :
                         item.store === 'Archive' ? 'text-white' :
-                        item.store === 'Amazon' ? 'text-yellow-400' :
-                        item.store === 'Cape Union Mart' ? 'text-ds-orange shadow-[0_0_8px_rgba(234,88,12,0.3)]' :
+                        item.store === 'Cape Union Mart' ? 'text-purple-500' :
                         'text-ds-blue'
                       }`}>{item.store}</span>
                     </td>
@@ -569,11 +597,11 @@ function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, labe
   )
 }
 
-function StoreFilter({ name, colorClass, active, onClick }: { name: string, colorClass: string, active: boolean, onClick: () => void }) {
+function StoreFilter({ name, colorClass, textClass, active, onClick }: { name: string, colorClass: string, textClass?: string, active: boolean, onClick: () => void }) {
   return (
     <div onClick={onClick} className={`flex items-center gap-3 px-4 py-1.5 cursor-pointer transition-opacity ${active ? 'opacity-100' : 'opacity-30 hover:opacity-100'}`} suppressHydrationWarning>
       <div className={`w-2 h-2 rounded-full ${colorClass}`} />
-      <span className="font-bold text-[11px] truncate">{name}</span>
+      <span className={`font-bold text-[11px] truncate ${textClass || 'text-white'}`}>{name}</span>
     </div>
   )
 }
@@ -668,18 +696,19 @@ function FilterDropdown({ isOpen, options, selected, onToggle, onClear }: Filter
   )
 }
 
-function InventoryBadge({ soh }: { soh: number }) {
-  const isAvailable = soh > 0
+function InventoryBadge({ soh }: { soh: number | null | undefined }) {
+  const count = soh ?? 0
+  const isAvailable = count > 0
   return (
     <div className="flex justify-end">
       <div 
-        className={`w-9 h-9 rounded-lg flex items-center justify-center text-[${soh >= 99 ? '10px' : '12px'}] font-black border transition-all duration-500 select-none
+        className={`w-9 h-9 rounded-lg flex items-center justify-center text-[${count >= 99 ? '10px' : '12px'}] font-black border transition-all duration-500 select-none
         ${isAvailable 
-          ? 'bg-gradient-to-br from-ds-green/20 via-ds-green/10 to-transparent border-ds-green/40 text-ds-green shadow-[inset_0_0_12px_rgba(0,200,83,0.05)] hover:shadow-[0_0_20px_rgba(0,200,83,0.15)] hover:border-ds-green/60' 
-          : 'bg-ds-border/50 border-ds-surface text-ds-surface'
+          ? 'bg-linear-to-br from-ds-green/20 via-ds-green/10 to-transparent border-ds-green/40 text-ds-green shadow-[inset_0_0_12px_rgba(0,200,83,0.05)] hover:shadow-[0_0_20px_rgba(0,200,83,0.15)] hover:border-ds-green/60' 
+          : 'bg-ds-red-deep/10 border-ds-red-border/30 text-ds-red/50'
         }`}
       >
-        {soh >= 99 ? '99+' : soh}
+        {count >= 99 ? '99+' : count}
       </div>
     </div>
   )

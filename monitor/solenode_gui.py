@@ -6,6 +6,7 @@ import customtkinter as ctk
 from curl_cffi import requests
 from google.cloud import firestore
 import undetected_chromedriver as uc
+from bs4 import BeautifulSoup
 
 # Setup Theme
 ctk.set_appearance_mode("Dark")
@@ -41,6 +42,8 @@ class SoleNodeApp(ctk.CTk):
         try:
             self.db = firestore.Client()
         except: pass
+
+        self.last_blog_scrape = 0
 
         # UI Layout
         self.grid_columnconfigure(0, weight=1)
@@ -101,6 +104,11 @@ class SoleNodeApp(ctk.CTk):
                 self.scrape_amazon()
                 if not self.monitoring: break
                 self.scrape_capeunion()
+
+                # 24 Hour Blog Check
+                if time.time() - self.last_blog_scrape > 86400:
+                    self.scrape_blogs()
+                    self.last_blog_scrape = time.time()
             except Exception as e:
                 self.log(f"❌ Cycle Error: {e}")
             
@@ -394,3 +402,33 @@ class SoleNodeApp(ctk.CTk):
 if __name__ == "__main__":
     app = SoleNodeApp()
     app.mainloop()
+    def scrape_blogs(self):
+        self.log("📚 Starting 24-Hour Blog Intelligence Sweep...")
+        STORES = {
+            "Jack Lemkus": {"url": "https://www.lemkus.com/blogs/news", "selector": "a.article-card__title", "base": "https://www.lemkus.com"},
+            "Archive": {"url": "https://blog.archivestore.co.za/news/", "selector": "h3.pp-post-title a", "base": ""},
+            "Shelflife": {"url": "https://www.shelflife.co.za/blog", "selector": ".blog-post-title a, .post-title a", "base": "https://www.shelflife.co.za"}
+        }
+        for name, cfg in STORES.items():
+            try:
+                r = requests.get(cfg["url"], impersonate="chrome110", timeout=15)
+                if r.status_code == 200:
+                    soup = BeautifulSoup(r.text, 'html.parser')
+                    posts = soup.select(cfg["selector"])
+                    count = 0
+                    for p in posts[:5]:
+                        title = p.get_text(strip=True)
+                        link = p.get('href', '')
+                        if not link.startswith('http'): link = cfg["base"] + link
+                        
+                        doc_id = f"blog_{name}_{title}".replace(" ", "_")[:100]
+                        doc_ref = self.db.collection("store_blogs").document(doc_id)
+                        if not doc_ref.get().exists:
+                            doc_ref.set({
+                                "title": title, "url": link, "store": name,
+                                "detected_at": firestore.SERVER_TIMESTAMP
+                            })
+                            count += 1
+                    self.log(f"✅ {name} Blog: {count} new reports.")
+            except Exception as e:
+                self.log(f"❌ Blog Error ({name}): {e}")
