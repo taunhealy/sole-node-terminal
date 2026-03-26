@@ -1,20 +1,31 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /user_alerts/{alertId} {
-      allow read, create, delete: if true; 
+    // 1. Let anyone view stock data (READ ONLY)
+    match /stock/{item} {
+      allow read: if true;
+      allow write: if false; 
     }
-    match /stock/{stockId} {
-      allow read, write: if true;
+    match /restock_logs/{log} {
+       allow read: if true;
+       allow write: if false;
     }
-    match /restock_logs/{logId} {
-      allow read, write: if true;
+    
+    // 2. Intelligence Reports (READ ONLY)
+    match /store_blogs/{blog} {
+       allow read: if true;
+       allow write: if false;
     }
-    match /store_blogs/{blogId} {
-      allow read, write: if true;
+
+    // 3. User alerts (Read/Create only)
+    match /user_alerts/{alert} {
+       allow read, create: if true;
+       allow update, delete: if false;
     }
-    match /{document=**} {
-      allow read, write: if true;
+
+    // 4. User profiles (Needed for tiers)
+    match /users/{userId} {
+       allow read, write: if true;
     }
   }
 }

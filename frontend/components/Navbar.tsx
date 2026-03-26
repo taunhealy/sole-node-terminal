@@ -18,6 +18,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Seek', path: '/seek' },
+    { name: 'Compare', path: '/compare' },
     { name: 'Blog', path: '/blog' }
   ]
 
@@ -65,7 +66,7 @@ export default function Navbar() {
           <div className="w-10 h-10 rounded-xl bg-ds-blue-deep flex items-center justify-center text-ds-blue shadow-[0_0_20px_rgba(30,58,138,0.4)] transition-transform group-hover:scale-110">
             <Zap className="w-6 h-6 fill-ds-blue" />
           </div>
-          <span className="font-black text-2xl tracking-tighter italic uppercase text-white">SOLE<span className="text-ds-blue">NODE</span>.io</span>
+          <span className="font-black text-2xl tracking-medium italic uppercase text-white">SOLE<span className="text-ds-blue">SEEK</span>.io</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8 bg-white/5 px-6 py-2.5 rounded-full border border-white/10 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-all cursor-pointer" onMouseEnter={onEnter} onMouseLeave={onLeave}>
@@ -100,7 +101,7 @@ export default function Navbar() {
             {!user ? (
               <button 
                 onClick={login}
-                className="flex items-center gap-2 bg-ds-indigo text-ds-bg px-5 py-2.5 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(129,140,248,0.3)]"
+                className="flex items-center gap-2 bg-ds-blue text-white px-5 py-2.5 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-ds-bg transition-all shadow-[0_0_20px_rgba(96,165,250,0.3)]"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 Auth_Terminal

@@ -7,7 +7,7 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'SOLE NODE | Sneaker Intelligence',
+  title: 'SOLE SEEK | Sneaker Intelligence',
   description: 'The definitive sneaker monitoring and arbitrage terminal.',
 }
 
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="bg-[#101217]">
+    <html lang="en" suppressHydrationWarning className="bg-ds-bg">
       <body className={inter.className}>
         <AuthProvider>
           <Navbar />

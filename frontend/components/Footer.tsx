@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="col-span-1 md:col-span-1">
           <Link href="/" className="flex items-center gap-3 mb-6 group">
             <Zap className="w-6 h-6 text-ds-blue fill-ds-blue" />
-            <span className="font-black text-xl tracking-tighter uppercase italic text-white transition-colors group-hover:text-ds-indigo">SOLE<span className="text-ds-blue">NODE</span></span>
+            <span className="font-black text-xl tracking-tighter uppercase italic text-white transition-colors group-hover:text-ds-indigo">SOLE<span className="text-ds-blue">SEEK</span></span>
           </Link>
           <p className="text-ds-text-dim text-sm leading-relaxed">
             Leading the sneaker intelligence revolution. Providing high-precision monitoring for the most exclusive drops across Africa and the globe.
@@ -41,7 +41,7 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">
-          © 2026 SOLE NODE INTELLIGENCE. ALL RIGHTS RESERVED.
+          © 2026 SOLE SEEK INTELLIGENCE. ALL RIGHTS RESERVED.
         </p>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">

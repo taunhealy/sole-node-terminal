@@ -34,6 +34,11 @@ STORES = {
         "url": "https://www.shelflife.co.za/blog",
         "selector": ".blog-post-title a, .post-title a", # Common selectors for their platform
         "base_url": "https://www.shelflife.co.za"
+    },
+    "Nice Kicks": {
+        "url": "https://www.nicekicks.com/category/sneaker-news/",
+        "selector": "h2.entry-title a",
+        "base_url": ""
     }
 }
 

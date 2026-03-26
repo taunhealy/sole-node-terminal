@@ -28,7 +28,7 @@ class SoleNodeApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("SoleNode.io | v1.6 Deep Scraper [Timberland Edition]")
+        self.title("SoleSeek.io | v1.7 Deep Scraper [Timberland Edition]")
         self.geometry("1000x800")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -49,7 +49,7 @@ class SoleNodeApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        self.header_label = ctk.CTkLabel(self, text="SOLENODE.io", font=("Inter", 36, "bold"), text_color="#3a86ff")
+        self.header_label = ctk.CTkLabel(self, text="SOLESEEK.io", font=("Inter", 36, "bold"), text_color="#3a86ff")
         self.header_label.grid(row=0, column=0, pady=(30, 5), sticky="n")
 
         self.status_label = ctk.CTkLabel(self, text="SERVER STATUS: STOPPED", font=("Inter", 14, "bold"), text_color="gray")
@@ -66,7 +66,7 @@ class SoleNodeApp(ctk.CTk):
 
         self.log_box = ctk.CTkTextbox(self, font=("Consolas", 12), border_width=1, border_color="#2d2d33")
         self.log_box.grid(row=2, column=0, padx=40, pady=10, sticky="nsew")
-        self.log_box.insert("0.0", ">>> SoleNode Terminal v1.6 [Cloud Stealth] Initialized.\n>>> 🟢 Database: Connected\n>>> 🛡️ Amazon Bypass: Active\n")
+        self.log_box.insert("0.0", ">>> SoleSeek Terminal v1.7 [Cloud Stealth] Initialized.\n>>> 🟢 Database: Connected\n>>> 🛡️ Amazon Bypass: Active\n")
 
     def log(self, message):
         timestamp = time.strftime("[%H:%M:%S]")
@@ -104,9 +104,15 @@ class SoleNodeApp(ctk.CTk):
                 self.scrape_amazon()
                 if not self.monitoring: break
                 self.scrape_capeunion()
+                if not self.monitoring: break
+                self.scrape_soulgallery()
+                if not self.monitoring: break
+                self.scrape_plugnplay()
+                if not self.monitoring: break
+                self.scrape_courtorder()
 
-                # 24 Hour Blog Check
-                if time.time() - self.last_blog_scrape > 86400:
+                # Blog Check Cycle (Every 12 hours)
+                if time.time() - self.last_blog_scrape > 43200: 
                     self.scrape_blogs()
                     self.last_blog_scrape = time.time()
             except Exception as e:
@@ -119,12 +125,23 @@ class SoleNodeApp(ctk.CTk):
                     time.sleep(1)
         self.log("✅ Halted.")
 
+    def get_chrome_version(self):
+        try:
+            import subprocess, re
+            output = subprocess.check_output(r'reg query "HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon" /v version', shell=True)
+            version = re.search(r'(\d+)\.', output.decode())
+            if version: return int(version.group(1))
+        except: pass
+        return None
+
     def solve_cloudflare(self):
         self.log("🛡️ Initializing Stealth Session for Shelflife API...")
         try:
             options = uc.ChromeOptions()
             options.add_argument('--window-size=1280,720')
-            driver = uc.Chrome(options=options)
+            options.add_argument('--headless=new')
+            v = self.get_chrome_version()
+            driver = uc.Chrome(options=options, version_main=v)
             driver.get('https://www.shelflife.co.za/products')
             time.sleep(12) 
             cookies = driver.get_cookies()
@@ -162,7 +179,9 @@ class SoleNodeApp(ctk.CTk):
                             except: p_val = 0
                             sync_items.append({
                                 'sid': str(sku.get('id')), 'title': title, 'sz': str(size), 'color': color,
-                                'soh': int(sku.get('soh', 0)), 'price': p_val, 'url': p.get('url','')
+                                'soh': int(sku.get('soh', 0)), 'price': p_val, 
+                                'old_price': float(str(sku.get('old_price') or sku.get('price') or 0).replace('R','').replace(',','').strip()),
+                                'url': p.get('url','')
                             })
                     self.log(f"💎 Shelflife found {len(sync_items)} SKUs on Page {page}")
                     self.sync_multi(sync_items, "Shelflife")
@@ -178,8 +197,16 @@ class SoleNodeApp(ctk.CTk):
             r = requests.get(url, impersonate="chrome110")
             if r.status_code == 200:
                 prods = r.json().get('products', [])
+                target_footwear = ['sneaker', 'footwear', 'shoe', 'jordan', 'nike', 'adidas', 'converse', 'new balance', 'puma', 'asics', 'vans', 'reebok', 'saucony', 'dunk']
                 sync_items = []
                 for p in prods:
+                    title = p.get('title', '').lower()
+                    ptype = p.get('product_type', '').lower()
+                    
+                    # Expanded blacklist for apparel/accessories
+                    if any(x in title or x in ptype for x in ['tee', 't-shirt', 'shirt', 'socks', 'sock', 'pant', 'hoodie', 'jacket', 'beanie', 'short', 'crew', 'hat', 'cap', 'bra', 'tights', 'bag', 'backpack', 'bottle', 'slides']): continue
+                    if any(x in ptype for x in ['apparel', 'accessories', 'clothing']): continue
+
                     options = p.get('options', [])
                     c_idx, s_idx = -1, -1
                     for i, o in enumerate(options):
@@ -194,11 +221,138 @@ class SoleNodeApp(ctk.CTk):
                         sync_items.append({
                             'sid': str(v.get('id')), 'title': p.get('title'), 'sz': str(size), 'color': color,
                             'soh': 1 if v.get('available') else 0, 'price': float(v.get('price', 0)),
+                            'old_price': float(v.get('compare_at_price') or v.get('price') or 0),
                             'url': f"https://www.lemkus.com/products/{p.get('handle')}"
                         })
                 self.log(f"🏆 Lemkus found {len(sync_items)} SKUs")
-                self.sync_multi(sync_items, "Jack Lemkus")
-        except Exception as e: self.log(f"⚠️ Lemkus Error: {e}")
+        except Exception as e:
+            self.log(f"⚠️ Lemkus Error: {e}")
+
+    def scrape_courtorder(self):
+        self.log("🔍 Fetching Court Order (Deep Page Scrape)...")
+        target_brands = ['jordan', 'nike', 'adidas', 'converse', 'new balance', 'puma', 'asics', 'vans', 'reebok', 'saucony', 'dunk', 'sneaker', 'shoe', 'footwear']
+        sync_items = []
+        page = 1
+        while page < 10: # Limit safe depth
+            url = f"https://courtorder.co.za/products.json?limit=250&page={page}"
+            try:
+                r = requests.get(url, impersonate="chrome110")
+                if r.status_code == 200:
+                    prods = r.json().get('products', [])
+                    if not prods: break
+                    for p in prods:
+                        title = p.get('title', '').lower()
+                        ptype = p.get('product_type', '').lower()
+                        if not any(b in title or b in ptype for b in target_brands): continue
+                        if any(x in title or x in ptype for x in ['tee', 't-shirt', 'socks', 'pant', 'hoodie', 'jacket', 'beanie', 'short', 'cap', 'hat']): continue
+                        
+                        options = p.get('options', [])
+                        s_idx = -1
+                        for i, o in enumerate(options):
+                            if 'size' in o.get('name','').lower(): s_idx = i
+                        
+                        for v in p.get('variants', []):
+                            size = v.get('title', 'OS')
+                            vopts = [v.get('option1'), v.get('option2'), v.get('option3')]
+                            if s_idx != -1 and vopts[s_idx]: size = vopts[s_idx]
+                            
+                            sync_items.append({
+                                'sid': f"COURT_{v.get('id')}", 
+                                'title': p.get('title'), 
+                                'sz': str(size), 
+                                'color': "—",
+                                'soh': 1 if v.get('available') else 0, 
+                                'price': float(v.get('price', 0)),
+                                'old_price': float(v.get('compare_at_price') or v.get('price') or 0),
+                                'url': f"https://courtorder.co.za/products/{p.get('handle')}"
+                            })
+                    page += 1
+                else: break
+            except: break
+        self.log(f"🏛️ Court Order found {len(sync_items)} SKUs")
+        self.sync_multi(sync_items, "Court Order")
+
+    def scrape_plugnplay(self):
+        self.log("🔍 Fetching The Plug and Play (Footwear)...")
+        target_brands = ['jordan', 'nike', 'adidas', 'converse', 'new balance', 'puma', 'asics', 'vans', 'reebok', 'saucony', 'dunk', 'sneaker', 'shoe', 'footwear']
+        url = "https://theplugandplay.co.za/products.json?limit=250"
+        try:
+            r = requests.get(url, impersonate="chrome110")
+            if r.status_code == 200:
+                prods = r.json().get('products', [])
+                sync_items = []
+                for p in prods:
+                    title = p.get('title', '').lower()
+                    ptype = p.get('product_type', '').lower()
+                    
+                    if not any(b in title or b in ptype for b in target_brands): continue
+                    if any(x in title or x in ptype for x in ['tee', 't-shirt', 'socks', 'pant', 'hoodie', 'jacket', 'beanie', 'short', 'cap', 'hat']): continue
+
+                    options = p.get('options', [])
+                    s_idx = -1
+                    for i, o in enumerate(options):
+                        if 'size' in o.get('name','').lower(): s_idx = i
+                    
+                    for v in p.get('variants', []):
+                        size = v.get('title', 'OS')
+                        vopts = [v.get('option1'), v.get('option2'), v.get('option3')]
+                        if s_idx != -1 and vopts[s_idx]: size = vopts[s_idx]
+                        
+                        sync_items.append({
+                            'sid': f"PNP_{v.get('id')}", 
+                            'title': p.get('title'), 
+                            'sz': str(size), 
+                            'color': "—",
+                            'soh': 1 if v.get('available') else 0, 
+                            'price': float(v.get('price', 0)),
+                            'url': f"https://theplugandplay.co.za/products/{p.get('handle')}"
+                        })
+                self.log(f"🔌 The Plug and Play found {len(sync_items)} SKUs")
+                self.sync_multi(sync_items, "The Plug and Play")
+        except Exception as e: self.log(f"⚠️ Plug and Play Error: {e}")
+
+    def scrape_soulgallery(self):
+        self.log("🔍 Fetching Soul Gallery (Deep Page Scrape)...")
+        target_types = ['Jordan 1', 'SB Dunk', 'Sneakers', 'Men', 'Converse', 'Footwear', 'Adidas', 'Women', 'Nike']
+        sync_items = []
+        page = 1
+        while page < 8:
+            url = f"https://soulgallery.co.za/products.json?limit=250&page={page}"
+            try:
+                r = requests.get(url, impersonate="chrome110")
+                if r.status_code == 200:
+                    prods = r.json().get('products', [])
+                    if not prods: break
+                    for p in prods:
+                        # Only include sneakers/footwear
+                        p_type = p.get('product_type', '')
+                        if not any(t.lower() in p_type.lower() for t in target_types): continue
+                        
+                        options = p.get('options', [])
+                        s_idx = -1
+                        for i, o in enumerate(options):
+                            if 'size' in o.get('name','').lower(): s_idx = i
+                        
+                        for v in p.get('variants', []):
+                            size = v.get('title', 'OS')
+                            vopts = [v.get('option1'), v.get('option2'), v.get('option3')]
+                            if s_idx != -1 and vopts[s_idx]: size = vopts[s_idx]
+                            
+                            sync_items.append({
+                                'sid': f"SOUL_{v.get('id')}", 
+                                'title': p.get('title'), 
+                                'sz': str(size), 
+                                'color': "—",
+                                'soh': 1 if v.get('available') else 0, 
+                                'price': float(v.get('price', 0)),
+                                'old_price': float(v.get('compare_at_price') or v.get('price') or 0),
+                                'url': f"https://soulgallery.co.za/products/{p.get('handle')}"
+                            })
+                    page += 1
+                else: break
+            except: break
+        self.log(f"🕯️ Soul Gallery found {len(sync_items)} SKUs")
+        self.sync_multi(sync_items, "Soul Gallery")
 
     def scrape_archive(self):
         self.log("🔍 Fetching Archive (VTEX Deep Scrape)...")
@@ -227,7 +381,9 @@ class SoleNodeApp(ctk.CTk):
                             sync_items.append({
                                 'sid': str(itm.get('itemId')), 'title': m.get('name', 'N/A'),
                                 'sz': str(itm.get('Size', ['Multi'])[0]), 'color': m.get('color', '—'),
-                                'soh': int(offer.get('AvailableQuantity', 0)), 'price': float(offer.get('Price', 0)),
+                                'soh': int(offer.get('AvailableQuantity', 0)), 
+                                'price': float(offer.get('Price', 0)),
+                                'old_price': float(offer.get('ListPrice', 0)),
                                 'url': p_url
                             })
                 self.log(f"👟 Archive Sync: {len(sync_items)} SKUs processed via VTEX API")
@@ -239,7 +395,8 @@ class SoleNodeApp(ctk.CTk):
         try:
             options = uc.ChromeOptions()
             options.add_argument('--headless=new')
-            driver = uc.Chrome(options=options)
+            v = self.get_chrome_version()
+            driver = uc.Chrome(options=options, version_main=v)
             keywords = ["timberland", "puma sneakers"]
             for kw in keywords:
                 driver.get(f"https://www.amazon.co.za/s?k={kw.replace(' ', '+')}")
@@ -273,7 +430,8 @@ class SoleNodeApp(ctk.CTk):
         try:
             options = uc.ChromeOptions()
             options.add_argument('--headless=new')
-            driver = uc.Chrome(options=options)
+            v = self.get_chrome_version()
+            driver = uc.Chrome(options=options, version_main=v)
             urls = [
                 "https://www.capeunionmart.co.za/footwear/running/trail-running-shoes/",
                 "https://www.capeunionmart.co.za/c/women-footwear",
@@ -378,6 +536,7 @@ class SoleNodeApp(ctk.CTk):
                         "color": item['color'],
                         "soh": item['soh'],
                         "current_price": item['price'],
+                        "original_price": item.get('old_price', item['price']),
                         "store": store,
                         "url": item.get('url', ''),
                         "last_updated": firestore.SERVER_TIMESTAMP
@@ -395,6 +554,73 @@ class SoleNodeApp(ctk.CTk):
         except Exception as e:
             self.log(f"❌ Sync Error: {e}")
 
+    def scrape_blogs(self):
+        self.log("📚 Starting Blog Intelligence Sweep...")
+        STORES = {
+            "Jack Lemkus": {"url": "https://www.lemkus.com/blogs/news", "selector": "a.article-card__title", "base": "https://www.lemkus.com"},
+            "Archive": {"url": "https://blog.archivestore.co.za/news/", "selector": "h3.pp-content-grid-post-title a", "base": ""},
+            "Shelflife": {"url": "https://www.shelflife.co.za/blog", "selector": ".blog-post-title a, .post-title a", "base": "https://www.shelflife.co.za"},
+            "Nice Kicks": {"url": "https://www.nicekicks.com/news/", "selector": "h2.entry-title a", "base": ""}
+        }
+        headers = {"User-Agent": self.user_agent}
+        for name, cfg in STORES.items():
+            try:
+                r = requests.get(cfg["url"], headers=headers, cookies=self.session_cookies, impersonate="chrome110", timeout=15)
+                if r.status_code == 200:
+                    soup = BeautifulSoup(r.text, 'html.parser')
+                    posts = soup.select(cfg["selector"])
+                    count = 0
+                    for p in posts[:8]: # Check latest 8
+                        title = p.get_text(strip=True)
+                        link = p.get('href', '')
+                        if not link: continue
+                        if not link.startswith('http'): link = cfg["base"] + link
+                        
+                        doc_id = f"blog_{name}_{title}".replace(" ", "_").replace("/", "_")[:100]
+                        doc_ref = self.db.collection("store_blogs").document(doc_id)
+                        
+                        existing = doc_ref.get()
+                        excerpt = "Bot intelligence detected a new editorial update concerning regional inventory and releases."
+                        
+                        # Only fetch if new OR if existing is placeholder
+                        needs_fetch = not existing.exists or "Bot intelligence" in existing.to_dict().get('excerpt', '')
+
+                        if needs_fetch:
+                            try:
+                                # Fetch full article for excerpt
+                                art_r = requests.get(link, headers=headers, cookies=self.session_cookies, impersonate="chrome110", timeout=10)
+                                if art_r.status_code == 200:
+                                    art_soup = BeautifulSoup(art_r.text, 'html.parser')
+                                    # Try common article body selectors
+                                    content = art_soup.select_one('article, .article__content, .blog-post-content, .pp-post-content, .post-content, .entry-content, .post-body')
+                                    if content:
+                                        ps = [p.get_text(strip=True) for p in content.find_all(['p', 'div']) if len(p.get_text(strip=True)) > 20]
+                                        if ps:
+                                            full_text = " ".join(ps)
+                                            # Clean text (remove extra spaces)
+                                            full_text = " ".join(full_text.split())
+                                            sentences = [s.strip() + "." for s in full_text.split('.') if len(s.strip()) > 15]
+                                            if len(sentences) >= 2:
+                                                excerpt = f"{sentences[0]} {sentences[1]}"
+                                            elif len(sentences) == 1:
+                                                excerpt = sentences[0]
+                                            
+                                            if len(excerpt) > 280: excerpt = excerpt[:277] + "..."
+                            except: pass
+
+                            data = {
+                                "title": title, "url": link, "store": name,
+                                "excerpt": excerpt,
+                                "detected_at": firestore.SERVER_TIMESTAMP
+                            }
+                            doc_ref.set(data, merge=True)
+                            count += 1
+                    self.log(f"✅ {name} Blog: {count} new reports.")
+                else:
+                    self.log(f"⚠️ {name} Blog: Status {r.status_code}")
+            except Exception as e:
+                self.log(f"❌ Blog Error ({name}): {e}")
+
     def on_closing(self):
         self.monitoring = False
         self.destroy()
@@ -402,33 +628,3 @@ class SoleNodeApp(ctk.CTk):
 if __name__ == "__main__":
     app = SoleNodeApp()
     app.mainloop()
-    def scrape_blogs(self):
-        self.log("📚 Starting 24-Hour Blog Intelligence Sweep...")
-        STORES = {
-            "Jack Lemkus": {"url": "https://www.lemkus.com/blogs/news", "selector": "a.article-card__title", "base": "https://www.lemkus.com"},
-            "Archive": {"url": "https://blog.archivestore.co.za/news/", "selector": "h3.pp-post-title a", "base": ""},
-            "Shelflife": {"url": "https://www.shelflife.co.za/blog", "selector": ".blog-post-title a, .post-title a", "base": "https://www.shelflife.co.za"}
-        }
-        for name, cfg in STORES.items():
-            try:
-                r = requests.get(cfg["url"], impersonate="chrome110", timeout=15)
-                if r.status_code == 200:
-                    soup = BeautifulSoup(r.text, 'html.parser')
-                    posts = soup.select(cfg["selector"])
-                    count = 0
-                    for p in posts[:5]:
-                        title = p.get_text(strip=True)
-                        link = p.get('href', '')
-                        if not link.startswith('http'): link = cfg["base"] + link
-                        
-                        doc_id = f"blog_{name}_{title}".replace(" ", "_")[:100]
-                        doc_ref = self.db.collection("store_blogs").document(doc_id)
-                        if not doc_ref.get().exists:
-                            doc_ref.set({
-                                "title": title, "url": link, "store": name,
-                                "detected_at": firestore.SERVER_TIMESTAMP
-                            })
-                            count += 1
-                    self.log(f"✅ {name} Blog: {count} new reports.")
-            except Exception as e:
-                self.log(f"❌ Blog Error ({name}): {e}")
