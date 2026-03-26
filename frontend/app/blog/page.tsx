@@ -51,22 +51,41 @@ export default function BlogPage() {
             </p>
           </div>
           
-          <div className="hidden lg:flex items-center gap-10 px-12 py-8 bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-ds-blue/10 blur-[60px] -translate-y-1/2 translate-x-1/2" />
+          <div className="hidden lg:flex items-center gap-12 px-10 py-6 bg-ds-surface/50 border border-white/10 rounded-2xl backdrop-blur-3xl shadow-2xl relative overflow-hidden group hover:border-ds-indigo/30 transition-all duration-500">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-ds-indigo/10 blur-[60px] -translate-y-1/2 translate-x-1/2 group-hover:bg-ds-indigo/20 transition-colors" />
+            <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-ds-indigo/30 to-transparent" />
+            
             <div className="relative z-10">
-               <p className="text-[10px] font-black uppercase text-ds-blue tracking-[0.2em] mb-2 flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-ds-blue animate-pulse" />
-                  Feed_Intelligence
-               </p>
-               <p className="text-5xl font-black text-white tracking-tighter">{posts.length}</p>
+               <span className="text-[10px] font-black uppercase text-ds-indigo tracking-[0.2em] mb-3 flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-ds-indigo shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                   Feed_Intelligence
+                </span>
+               <div className="flex items-baseline gap-2">
+                 <p className="text-4xl font-black text-white tracking-tighter">{posts.length}</p>
+                 <span className="text-[10px] font-black uppercase text-ds-text-dim tracking-widest opacity-40">Reports</span>
+               </div>
             </div>
-            <div className="w-px h-16 bg-white/10 mx-2" />
+
+            <div className="w-px h-12 bg-white/10" />
+
             <div className="relative z-10">
-               <p className="text-[10px] font-black uppercase text-ds-green tracking-[0.2em] mb-2 flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-ds-green animate-ping" />
-                  Node_Status
-               </p>
-               <p className="text-5xl font-black text-white italic tracking-tighter">SCRAPING</p>
+               <span className="text-[10px] font-black uppercase text-ds-green tracking-[0.2em] mb-3 flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
+                   Node_Status
+                </span>
+               <div className="flex items-center gap-3">
+                 <p className="text-2xl font-black text-white tracking-tight uppercase">Scraping</p>
+                 <div className="flex gap-1">
+                    {[1,2,3].map(i => (
+                      <motion.div 
+                        key={i}
+                        animate={{ height: [4, 12, 4] }}
+                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
+                        className="w-1 bg-ds-green/50 rounded-full"
+                      />
+                    ))}
+                 </div>
+               </div>
             </div>
           </div>
         </div>
@@ -103,8 +122,8 @@ export default function BlogPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.05 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="p-8 rounded-3xl bg-white/3 border border-white/5 group cursor-pointer transition-all hover:bg-ds-indigo/5 hover:border-ds-indigo/30 shadow-xl relative overflow-hidden"
+                whileHover={{ boxShadow: '0 0 40px rgba(96,165,250,0.08), 0 0 80px rgba(99,102,241,0.04)' }}
+                className="p-8 rounded-3xl bg-white/3 border border-white/5 group cursor-pointer transition-all hover:bg-ds-indigo/5 hover:border-ds-indigo/20 shadow-xl relative overflow-hidden"
               >
                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                     <div className="text-4xl font-black uppercase rotate-90 origin-bottom-right translate-y-12 whitespace-nowrap">{post.store}</div>

@@ -10,7 +10,8 @@ interface AppUser {
   uid: string
   email: string | null
   displayName: string | null
-  tier: 'Standard' | 'Pro' | 'Elite'
+  tier: 'Free' | 'Standard' | 'Pro' | 'Elite'
+  status: 'active' | 'paused' | 'inactive'
 }
 
 interface AuthContextType {
@@ -42,18 +43,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userDocRef = doc(db, 'users', user.email!)
         const unsubscribeProfile = onSnapshot(userDocRef, async (snapshot) => {
            if (snapshot.exists()) {
+             const data = snapshot.data()
              setAppUser({
                uid: user.uid,
                email: user.email,
                displayName: user.displayName,
-               tier: snapshot.data().tier || 'Standard',
+               tier: data.tier || 'Free',
+               status: data.subscription_status || 'inactive',
              })
            } else {
              // Create initial profile
              const initialProfile = {
                email: user.email,
                displayName: user.displayName,
-               tier: 'Standard',
+               tier: 'Free',
                subscription_status: 'inactive',
                created_at: new Date(),
              }
@@ -62,7 +65,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                uid: user.uid,
                email: user.email,
                displayName: user.displayName,
-               tier: 'Standard',
+               tier: 'Free',
+               status: 'inactive',
              })
            }
            setLoading(false)

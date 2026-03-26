@@ -4,12 +4,15 @@ export default function SizeBadge({ size, className = "" }: { size: string, clas
   const getStyle = (s: string) => {
     const n = parseFloat(s.replace(/[^0-9.]/g, ''))
     if (isNaN(n)) return 'bg-white/5 text-ds-text-dim border-white/10'
-    const baseBg = 'bg-[#0d0f14] shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]'
-    if (n <= 5) return `${baseBg} text-ds-indigo border-ds-indigo-border/50 shadow-[0_0_15px_rgba(129,140,248,0.08)]`
-    if (n <= 8) return `${baseBg} text-ds-blue border-ds-blue-border/50 shadow-[0_0_15px_rgba(96,165,250,0.08)]`
-    if (n <= 10) return `${baseBg} text-ds-cyan border-ds-cyan-border/50 shadow-[0_0_15px_rgba(34,211,238,0.08)]`
-    if (n <= 12) return `${baseBg} text-ds-orange border-ds-orange-border/50 shadow-[0_0_15px_rgba(251,146,60,0.08)]`
-    return `${baseBg} text-ds-red border-ds-red-border/50 shadow-[0_0_15px_rgba(239,68,68,0.08)]`
+    
+    const baseClass = 'bg-[#0d0f14] shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]'
+    
+    // 🧠 Market Intelligence Color Coding
+    if (n < 4) return `${baseClass} text-ds-text-dim/50 border-white/5 shadow-none` // Youth / Infant (Low Resale Relevancy)
+    if (n >= 7 && n <= 10.5) return `${baseClass} text-yellow-500 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.15)]` // "Money Sizes" / High Relevancy
+    if ((n >= 4 && n < 7) || (n >= 11 && n <= 13)) return `${baseClass} text-ds-indigo border-ds-indigo-border/40 shadow-[0_0_15px_rgba(129,140,248,0.1)]` // Core Sizes / Medium Relevancy
+    
+    return `${baseClass} text-ds-text-dim border-white/10` // Extremely large / atypical
   }
   
   return (

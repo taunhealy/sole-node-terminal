@@ -22,16 +22,16 @@ export default function Footer() {
           <h4 className="font-black text-xs uppercase tracking-widest text-white mb-6">Platform</h4>
           <ul className="space-y-4 text-sm text-ds-text-dim">
             <li><Link href="/seek" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">The Terminal</Link></li>
-            <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Monitor Status</a></li>
-            <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Release Calendar</a></li>
-            <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Supported Stores</a></li>
+            <li><Link href="/seek" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Monitor Status</Link></li>
+            <li><Link href="/seek" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Release Calendar</Link></li>
+            <li><Link href="/#stores" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Supported Stores</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="font-black text-xs uppercase tracking-widest text-white mb-6">Company</h4>
           <ul className="space-y-4 text-sm text-ds-text-dim">
-            <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">About Us</a></li>
+            <li><Link href="/#about" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">About Us</Link></li>
             <li><Link href="/blog" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Blog</Link></li>
             <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Legal</a></li>
             <li><a href="#" className="text-white hover:text-ds-indigo transition-colors uppercase font-bold text-xs tracking-widest">Contact</a></li>

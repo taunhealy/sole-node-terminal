@@ -17,10 +17,10 @@ service cloud.firestore {
        allow write: if false;
     }
 
-    // 3. User alerts (Read/Create only)
+    // 3. User alerts (Read/Create/Delete — needed for watch & unwatch)
     match /user_alerts/{alert} {
-       allow read, create: if true;
-       allow update, delete: if false;
+       allow read, create, delete: if true;
+       allow update: if false;
     }
 
     // 4. User profiles (Needed for tiers)
