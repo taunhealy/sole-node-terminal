@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'SOLE SEEK | Sneaker Intelligence',
   description: 'The definitive sneaker monitoring and arbitrage terminal.',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({

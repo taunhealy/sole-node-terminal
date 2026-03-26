@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy, limit, onSnapshot, DocumentData, QuerySnapshot } from 'firebase/firestore'
+import SizeBadge from '@/components/SizeBadge'
 import { Search, ArrowLeft, Layers, ExternalLink, TrendingDown, Store, Ruler, Package, Info, X } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -29,7 +30,7 @@ export default function ComparePage() {
 
   useEffect(() => {
     const q = query(collection(db, "stock"), orderBy("last_updated", "desc"))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       setStock(snapshot.docs.map(doc => ({ sku_id: doc.id, ...doc.data() })) as StockItem[])
       setLoading(false)
     })
@@ -186,19 +187,22 @@ export default function ComparePage() {
               exit={{ opacity: 0, y: 30 }}
               className="space-y-12"
             >
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                  <div className="flex-1 p-8 rounded-xl bg-ds-surface border border-white/5 relative overflow-hidden group/card shadow-2xl backdrop-blur-xl">
-                     {/* Gradient background accent */}
-                     <div className="absolute -inset-24 bg-ds-blue/5 blur-[80px] opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
+              <div className="flex flex-col md:flex-row gap-8 items-stretch">
+                  <div className="flex-1 p-10 rounded-[2.5rem] bg-white/5 border border-white/10 relative overflow-hidden group/card shadow-2xl backdrop-blur-3xl">
+                     <div className="absolute top-0 right-0 w-48 h-48 bg-ds-blue/10 blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-ds-blue/20 transition-colors" />
                      
-                     <span className="text-ds-blue text-[10px] font-black uppercase tracking-[0.3em] mb-4 block">Selected_Identity</span>
-                     <h3 className="text-3xl lg:text-4xl font-black uppercase tracking-tight mb-8 leading-tight max-w-2xl text-white">{selectedProduct}</h3>
-                     <div className="flex gap-4">
-                        <div className="px-4 py-2 bg-ds-blue/10 border border-ds-blue/20 rounded-lg text-[10px] font-black text-ds-blue uppercase tracking-widest">
-                           Stock: {comparisonData.reduce((acc, curr) => acc + curr.soh, 0)} Units
+                     <span className="text-ds-blue text-[10px] font-black uppercase tracking-[0.4em] mb-6 block">Asset_Analyzed</span>
+                     <h3 className="text-4xl lg:text-5xl font-black uppercase tracking-tight mb-10 leading-[0.9] text-white">
+                        {selectedProduct}
+                     </h3>
+                     <div className="flex flex-wrap gap-4 mt-auto">
+                        <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-ds-text-dim uppercase tracking-widest flex items-center gap-3 group-hover:border-white/20 transition-all">
+                           <div className="w-1.5 h-1.5 rounded-full bg-ds-blue animate-pulse" />
+                           Aggregated Stock: {comparisonData.reduce((acc, curr) => acc + curr.soh, 0)} Units
                         </div>
-                        <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-ds-text-dim uppercase tracking-widest">
-                           Spread: R{Math.round(comparisonData[0].current_price).toLocaleString()} - R{Math.round(comparisonData[comparisonData.length-1].current_price).toLocaleString()}
+                        <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-ds-text-dim uppercase tracking-widest flex items-center gap-3 group-hover:border-white/20 transition-all">
+                           <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_8px_rgba(0,200,83,0.4)]" />
+                           Market Spread: R{Math.round(comparisonData[0].current_price).toLocaleString()} - R{Math.round(comparisonData[comparisonData.length-1].current_price).toLocaleString()}
                         </div>
                      </div>
                   </div>
@@ -208,85 +212,82 @@ export default function ComparePage() {
               <div className="relative">
                  <div className="rounded-xl border border-white/5 overflow-hidden bg-ds-surface/30 backdrop-blur-xl shadow-2xl">
                     <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-white/5 border-b border-white/5">
-                          <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-ds-text-dim">Market Status</th>
-                          <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-ds-text-dim">Verified Source</th>
-                          <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-ds-text-dim">V-Identity / Size</th>
-                          <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-ds-text-dim text-right">Instant Rate</th>
-                          <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-ds-text-dim text-right">Execute</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/3">
-                        {comparisonData.map((item, i) => (
-                          <tr 
-                            key={item.sku_id} 
-                            className={`group border-b border-transparent hover:bg-ds-blue/5 transition-all duration-300 ${item.current_price === bestPrice ? 'bg-ds-blue/2' : ''}`}
-                          >
-                            <td className="px-10 py-5">
-                               {item.current_price === bestPrice ? (
-                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-ds-green/10 border border-ds-green/30 text-[9px] font-black text-ds-green uppercase tracking-wider">
-                                    <div className="w-1 h-1 rounded-full bg-ds-green animate-pulse" />
-                                    LOCAL BEST
-                                 </div>
-                               ) : (
-                                 <div className="flex items-center gap-2 text-[10px] font-bold text-ds-text-dim opacity-30 uppercase tracking-widest pl-2">
-                                    <div className="w-1 h-1 rounded-full bg-ds-text-dim" />
-                                    Standard
-                                 </div>
-                               )}
-                            </td>
-                            <td className="px-10 py-5">
-                               <div className="flex items-center gap-4">
-                                  <div className={`w-1.5 h-1.5 rounded-full ${
-                                    item.store === 'Shelflife' ? 'bg-ds-orange shadow-[0_0_8px_rgba(249,115,22,0.4)]' :
-                                    item.store === 'Jack Lemkus' ? 'bg-ds-gold shadow-[0_0_8px_rgba(212,175,55,0.4)]' :
-                                    item.store === 'Archive' ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]' :
-                                    item.store === 'Soul Gallery' ? 'bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]' :
-                                    item.store === 'The Plug and Play' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.4)]' :
-                                    item.store === 'Court Order' ? 'bg-slate-400 shadow-[0_0_8px_rgba(148,163,184,0.4)]' :
-                                    'bg-ds-blue shadow-[0_0_8px_rgba(96,165,250,0.4)]'
-                                  }`} />
-                                  <span className="font-bold text-xs uppercase tracking-tight text-white/90 group-hover:text-white transition-colors">{item.store}</span>
-                               </div>
-                            </td>
-                            <td className="px-10 py-5">
-                               <div className="flex items-center gap-8">
-                                  <div className="flex items-center gap-3">
-                                     <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-colors">
-                                        <Ruler className="w-3.5 h-3.5 text-ds-text-dim" />
-                                     </div>
-                                     <span className="text-xs font-bold text-white transition-all">{item.size_title}</span>
+                       <thead>
+                         <tr className="bg-white/5 border-b border-white/10">
+                           <th className="px-12 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-ds-text-dim">Market Status</th>
+                           <th className="px-12 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-ds-text-dim">Verified Source</th>
+                           <th className="px-12 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-ds-text-dim">V-Identity / Size</th>
+                           <th className="px-12 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-ds-text-dim text-right">Instant Rate</th>
+                           <th className="px-12 py-8 text-[10px] font-black uppercase tracking-[0.3em] text-ds-text-dim text-right pr-12">Execute</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-white/5">
+                         {comparisonData.map((item, i) => (
+                           <tr 
+                             key={item.sku_id} 
+                             className={`group border-b border-transparent hover:bg-white/5 transition-all duration-300 ${item.current_price === bestPrice ? 'bg-ds-blue/3' : ''}`}
+                           >
+                             <td className="px-12 py-8">
+                                {item.current_price === bestPrice ? (
+                                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-ds-green/10 border border-ds-green/30 text-[9px] font-black text-ds-green uppercase tracking-widest">
+                                     <div className="w-1.5 h-1.5 rounded-full bg-ds-green animate-pulse" />
+                                     OPTIMAL RATE
                                   </div>
-                                  <div className="h-4 w-px bg-white/5" />
-                                  <div className="text-[10px] font-bold text-ds-text-dim uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">{item.color}</div>
-                               </div>
-                            </td>
-                            <td className="px-10 py-5 text-right">
-                               <div className="flex flex-col items-end">
-                                  <span className={`text-base font-bold tracking-tight ${item.current_price === bestPrice ? 'text-ds-green' : 'text-white'}`}>
-                                     R{Math.round(item.current_price).toLocaleString()}
-                                  </span>
-                                  {item.original_price > item.current_price && (
-                                     <span className="text-[10px] font-bold text-ds-red line-through opacity-50">
-                                        R{Math.round(item.original_price).toLocaleString()}
-                                     </span>
-                                  )}
-                               </div>
-                            </td>
-                            <td className="px-10 py-5 text-right">
-                               <a 
-                                 href={item.url} 
-                                 target="_blank" 
-                                 rel="noopener noreferrer" 
-                               className="inline-flex h-9 px-4 items-center gap-2 rounded bg-ds-blue/10 hover:bg-ds-blue hover:text-white border border-ds-blue/20 hover:border-ds-blue text-[9px] font-black uppercase tracking-widest text-ds-blue transition-all active:scale-95 shadow-sm"
-                               >
-                                 CHECKOUT <ExternalLink className="w-3 h-3" />
-                               </a>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-[10px] font-bold text-ds-text-dim/40 uppercase tracking-widest pl-2">
+                                     <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                                     Verified
+                                  </div>
+                                )}
+                             </td>
+                             <td className="px-12 py-8">
+                                <div className="flex items-center gap-4">
+                                   <div className={`w-2 h-2 rounded-full ${
+                                     item.store === 'Shelflife' ? 'bg-ds-orange shadow-[0_0_10px_rgba(249,115,22,0.3)]' :
+                                     item.store === 'Jack Lemkus' ? 'bg-yellow-500 shadow-[0_0_10px_rgba(212,175,55,0.3)]' :
+                                     item.store === 'Archive' ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' :
+                                     item.store === 'Soul Gallery' ? 'bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.3)]' :
+                                     item.store === 'The Plug and Play' ? 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.3)]' :
+                                     item.store === 'Court Order' ? 'bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.3)]' :
+                                     'bg-ds-blue shadow-[0_0_10px_rgba(96,165,250,0.3)]'
+                                   }`} />
+                                   <span className="font-black text-[13px] uppercase tracking-wider text-white group-hover:text-ds-blue transition-colors">{item.store}</span>
+                                </div>
+                             </td>
+                             <td className="px-12 py-8">
+                                <div className="flex items-center gap-8">
+                                   <div className="flex items-center gap-3">
+                                    <SizeBadge size={item.size_title} />
+                                   </div>
+                                   <div className="h-6 w-px bg-white/10" />
+                                   <div className="text-[10px] font-black text-ds-text-dim uppercase tracking-[0.2em] group-hover:text-white transition-opacity">{item.color}</div>
+                                </div>
+                             </td>
+                             <td className="px-12 py-8 text-right">
+                                <div className="flex flex-col items-end">
+                                   <span className={`text-xl font-black tracking-tighter ${item.current_price === bestPrice ? 'text-ds-green underline decoration-ds-green/30 underline-offset-4' : 'text-white'}`}>
+                                      R{Math.round(item.current_price).toLocaleString()}
+                                   </span>
+                                   {item.original_price > item.current_price && (
+                                      <span className="text-[10px] font-black text-ds-red line-through opacity-50 mt-1">
+                                         R{Math.round(item.original_price).toLocaleString()}
+                                      </span>
+                                   )}
+                                </div>
+                             </td>
+                             <td className="px-12 py-8 text-right pr-12">
+                                <a 
+                                  href={item.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex h-12 px-8 items-center gap-3 rounded-2xl bg-white text-ds-bg hover:bg-ds-blue hover:text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl"
+                                >
+                                  EXECUTE <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
                     </table>
                  </div>
               </div>

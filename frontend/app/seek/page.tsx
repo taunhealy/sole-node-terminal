@@ -44,6 +44,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
+import SizeBadge from '@/components/SizeBadge'
 
 interface StockItem {
   sku_id: string
@@ -103,11 +104,43 @@ export default function TerminalBoard() {
   const [visibleCount, setVisibleCount] = useState(50)
   const [genderFilter, setGenderFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
+  const [comparingProduct, setComparingProduct] = useState<string | null>(null)
   
   const { user, loading: authLoading, appUser } = useAuth()
   const router = useRouter()
   const watchlistRef = useRef<string[]>([])
   const userEmail = user?.email || ""
+
+  const productGroupings = useMemo(() => {
+    const groups: Record<string, string[]> = {} // NormalizedKey -> List of original titles
+    const titleToKey: Record<string, string> = {}
+    
+    const uniqueTitles = Array.from(new Set(stock.map(s => s.product_title).filter(Boolean)))
+    
+    uniqueTitles.forEach(title => {
+      // 🧠 Intelligence normalization (Lower, clean punctuation, first 4 core terms)
+      const clean = title.toLowerCase().replace(/['"().\-,]/g, '')
+      const words = clean.split(/\s+/).filter(Boolean)
+      const key = words.slice(0, 4).join(' ')
+      
+      if (!groups[key]) groups[key] = []
+      groups[key].push(title)
+      titleToKey[title] = key
+    })
+    
+    return { groups, titleToKey }
+  }, [stock])
+
+  const productStoreCounts = useMemo(() => {
+    const counts: Record<string, Set<string>> = {}
+    stock.forEach(item => {
+      const key = productGroupings.titleToKey[item.product_title]
+      if (!key) return
+      if (!counts[key]) counts[key] = new Set()
+      counts[key].add(item.store || '')
+    })
+    return counts
+  }, [stock, productGroupings])
 
   // Helper functions
   const handleFilterToItem = (sku?: string) => {
@@ -204,7 +237,7 @@ export default function TerminalBoard() {
       const matchesStore = storeFilters.length === 0 || storeFilters.includes(item.store || '')
       const matchesSize = sizeFilters.length === 0 || sizeFilters.includes(item.size_title)
       
-      const isSale = (item.current_price ?? 0) < (item.original_price ?? 999999)
+      const isSale = !!item.original_price && (item.current_price ?? 0) < item.original_price
       
       const matchesTab = activeTab === 'hot' || (
         activeTab === 'sales' ? isSale :
@@ -299,7 +332,7 @@ export default function TerminalBoard() {
           <NavItem icon={<Flame className="w-4 h-4" />} label="Hot Pairs" active={activeTab === 'hot'} onClick={() => setActiveTab('hot')} />
           <NavItem icon={<TrendingUp className="w-4 h-4" />} label="New Releases" active={activeTab === 'releases'} onClick={() => setActiveTab('releases')} />
           <NavItem icon={<Activity className="w-4 h-4" />} label="Restocks" active={activeTab === 'restocks'} onClick={() => setActiveTab('restocks')} />
-          <NavItem icon={<Zap className="w-4 h-4 text-ds-blue" />} label="Sales" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} />
+          <NavItem icon={<Zap className={`w-4 h-4 ${activeTab === 'sales' ? 'text-ds-blue' : ''}`} />} label="Sales" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} />
           <NavItem icon={<Star className={`w-4 h-4 ${watchlistSids.length > 0 ? 'fill-current' : ''}`} />} label="Watchlist" count={watchlistSids.length} active={activeTab === 'watchlist'} onClick={() => setActiveTab('watchlist')} />
           <Link 
             href="/compare" 
@@ -373,14 +406,19 @@ export default function TerminalBoard() {
               </div>
             </div>
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setOnlyExclusives(!onlyExclusives)} 
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[10px] font-black uppercase ${onlyExclusives ? 'bg-ds-orange/10 border-ds-orange/30 text-ds-text-dim shadow-[0_0_15px_rgba(251,146,60,0.1)]' : 'bg-transparent border-white/5 text-ds-text-dim/50 hover:border-white/20'}`}
-              suppressHydrationWarning
-            >
-              <Star className={`w-3.5 h-3.5 ${onlyExclusives ? 'fill-current text-ds-orange' : ''}`} />
-              <span className="hidden sm:inline">Exclusives</span>
-            </button>
+            <div className="group relative">
+              <button 
+                disabled
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/5 text-ds-text-dim/20 cursor-not-allowed text-[10px] font-black uppercase transition-all"
+                suppressHydrationWarning
+              >
+                <Star className="w-3.5 h-3.5 opacity-20" />
+                <span className="hidden sm:inline">Exclusives</span>
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-ds-surface border border-white/10 rounded text-[8px] font-black uppercase text-ds-blue tracking-tighter opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                 COMING SOON Protocol
+              </div>
+            </div>
             {appUser?.tier && (
               <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${appUser.tier === 'Pro' ? 'bg-ds-indigo-deep border-ds-indigo-border text-ds-indigo shadow-[0_0_15px_rgba(129,140,248,0.2)]' : 'bg-white/5 border-white/10 text-ds-text-dim'}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -431,7 +469,7 @@ export default function TerminalBoard() {
               <thead className="sticky top-0 bg-ds-surface z-10 text-[10px] font-black uppercase tracking-widest">
                 <tr className="border-b border-white/5">
                    <th className="px-6 py-4 text-left min-w-[340px] text-ds-text-dim">Product / SKU</th>
-                   <th className="px-4 py-4 text-center w-[120px] text-ds-text-dim">Upload Date</th>
+                   <th className="px-4 py-4 text-center w-[120px] text-ds-text-dim">Modified</th>
                    <th className="px-2 py-4 text-center w-[100px] relative text-ds-text-dim">
                       <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'size' ? null : 'size')}>
                         Size
@@ -455,7 +493,7 @@ export default function TerminalBoard() {
                          <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white transition-opacity opacity-0 group-hover:opacity-100" />}
                       </div>
                    </th>
-                   <th className="px-4 py-4 text-left w-[140px] text-ds-text-dim">Colour</th>
+                   <th className="px-4 py-4 text-center w-[140px] text-ds-text-dim">Compare</th>
                    <th className="px-4 py-4 text-left w-[140px] relative text-ds-text-dim">
                       <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'store' ? null : 'store')}>
                         Store
@@ -508,7 +546,7 @@ export default function TerminalBoard() {
                     </td>
                     <td className="px-4 py-4 text-center">
                        <span className="text-[10px] font-black uppercase text-ds-text-dim tracking-tighter" suppressHydrationWarning>
-                          {item.created_at ? new Date(item.created_at?.seconds * 1000).toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' }) : '—'}
+                          {item.last_updated ? new Date(item.last_updated?.seconds * 1000).toLocaleDateString([], { month: 'short', day: '2-digit' }) : '—'}
                        </span>
                     </td>
                     <td className="px-2 py-4 text-center">
@@ -519,9 +557,19 @@ export default function TerminalBoard() {
                         {item.product_title.toLowerCase().includes("women's") ? 'F' : 'M'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 overflow-hidden max-w-[140px]">
-                      <span className="text-[11px] font-black uppercase text-ds-text-dim tracking-tighter truncate block">{item.color || '—'}</span>
-                    </td>
+                     <td className="px-4 py-4 text-center w-[140px]">
+                        {(productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size || 0) > 1 ? (
+                          <button 
+                            onClick={() => setComparingProduct(productGroupings.titleToKey[item.product_title])}
+                            className="bg-ds-indigo/10 border border-ds-indigo/30 hover:bg-ds-indigo hover:text-white text-ds-indigo px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-2"
+                          >
+                             <Layers className="w-3 h-3" />
+                             Compare ({productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size})
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase text-white/10 italic">Single_Node</span>
+                        )}
+                     </td>
                     <td className="px-4 py-4">
                       <span className={`text-[11px] font-black uppercase ${
                         item.store === 'Shelflife' ? 'text-ds-orange' :
@@ -537,7 +585,7 @@ export default function TerminalBoard() {
                     <td className="px-4 py-4 text-right font-black">
                        <div className="flex flex-col items-end">
                           <div className="flex items-center gap-2">
-                             <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-blue' : 'text-white'}`}>
+                             <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-green' : 'text-white'}`}>
                                 R{(item.current_price ?? 0).toLocaleString()}
                              </span>
                           </div>
@@ -585,16 +633,113 @@ export default function TerminalBoard() {
           {notifications.map((n) => (
             <motion.div key={n.nid} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 20, opacity: 0 }} className="pointer-events-auto bg-ds-surface border border-ds-blue/30 p-4 rounded-xl relative overflow-hidden backdrop-blur-md shadow-2xl">
               <div className="flex justify-between items-start mb-1">
-                 <span className="text-[10px] font-black text-ds-blue uppercase">{n.type === 'SALE' ? 'Sale Alert' : 'Restock Alert'}</span>
+                 <span className={`text-[10px] font-black uppercase ${n.type === 'SALE' ? 'text-ds-green' : 'text-ds-blue'}`}>{n.type === 'SALE' ? 'Sale Alert' : 'Restock Alert'}</span>
                  <ShieldCheck className="w-3 h-3 text-ds-text-dim" />
               </div>
               <h4 className="font-bold text-xs truncate">{n.product_title}</h4>
               <p className="text-[10px] text-ds-text-dim">Size {n.size_title} | {n.type === 'SALE' ? `NOW R${n.price_at_event}` : `+${n.quantity_added} units`}</p>
-              <motion.div initial={{ width: "100%" }} animate={{ width: "0%" }} transition={{ duration: 6, ease: "linear" }} className="absolute bottom-0 left-0 h-1 bg-ds-blue" />
+              <motion.div initial={{ width: "100%" }} animate={{ width: "0%" }} transition={{ duration: 6, ease: "linear" }} className={`absolute bottom-0 left-0 h-1 ${n.type === 'SALE' ? 'bg-ds-green' : 'bg-ds-blue'}`} />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {comparingProduct && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setComparingProduct(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-90" 
+            />
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }} 
+              className="fixed top-0 right-0 bottom-0 w-[500px] bg-ds-bg border-l border-white/5 z-100 shadow-2xl flex flex-col"
+            >
+               <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-ds-indigo text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">Market_Analysis</span>
+                    <h2 className="text-xl font-black uppercase tracking-widest text-white leading-tight line-clamp-2">{comparingProduct}</h2>
+                  </div>
+                  <button onClick={() => setComparingProduct(null)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 text-white transition-colors">
+                     <X className="w-5 h-5" />
+                  </button>
+               </div>
+               <div className="flex-1 overflow-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 bg-ds-bg z-20">
+                      <tr className="border-b border-white/5">
+                        <th className="px-8 py-4 text-[9px] font-black uppercase text-ds-text-dim tracking-widest">Boutique</th>
+                        <th className="px-4 py-4 text-center text-[9px] font-black uppercase text-ds-text-dim tracking-widest">Size</th>
+                        <th className="px-4 py-4 text-right text-[9px] font-black uppercase text-ds-text-dim tracking-widest">Price</th>
+                        <th className="px-8 py-4 text-right text-[9px] font-black uppercase text-ds-text-dim tracking-widest">Link</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.02]">
+                      {stock
+                        .filter(s => productGroupings.titleToKey[s.product_title] === comparingProduct)
+                        .sort((a, b) => (a.current_price || 0) - (b.current_price || 0))
+                        .map((s, idx) => {
+                          const isBest = idx === 0
+                          return (
+                            <tr key={s.sku_id + idx} className={`group transition-colors hover:bg-white/[0.02] ${isBest ? 'bg-ds-green/[0.02]' : ''}`}>
+                              <td className="px-8 py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-1.5 h-1.5 rounded-full ${
+                                    s.store === 'Shelflife' ? 'bg-ds-orange shadow-[0_0_8px_rgba(251,146,60,0.4)]' :
+                                    s.store === 'Jack Lemkus' ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]' :
+                                    s.store === 'Archive' ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]' :
+                                    'bg-ds-blue shadow-[0_0_8px_rgba(96,165,250,0.4)]'
+                                  }`} />
+                                  <div>
+                                    <div className="text-[11px] font-black text-white group-hover:text-ds-green transition-colors uppercase">{s.store}</div>
+                                    <div className="text-[8px] font-black text-ds-text-dim uppercase tracking-tighter">SKU: {s.sku_id}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-5 text-center">
+                                <div className="flex justify-center transform scale-90 origin-center">
+                                   <SizeBadge size={s.size_title} />
+                                </div>
+                              </td>
+                              <td className="px-4 py-5 text-right">
+                                <div className="text-[13px] font-black text-white group-hover:text-ds-green transition-colors">
+                                   R{s.current_price?.toLocaleString()}
+                                </div>
+                                {isBest && <div className="text-[8px] font-black text-ds-green uppercase tracking-tighter">Optimal Rate</div>}
+                              </td>
+                              <td className="px-8 py-5 text-right">
+                                <a 
+                                  href={s.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex p-2 bg-white/5 rounded-lg border border-white/10 hover:bg-white hover:text-ds-bg transition-all group/btn"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                    </tbody>
+                  </table>
+                  
+                  {stock.filter(s => productGroupings.titleToKey[s.product_title] === comparingProduct).length === 0 && (
+                     <div className="p-20 text-center opacity-20 italic text-xs">No variations found in active memory.</div>
+                  )}
+               </div>
+               <div className="p-8 bg-ds-indigo/5 border-t border-white/5">
+                  <p className="text-[9px] font-black text-ds-indigo uppercase text-center tracking-[0.2em] animate-pulse">
+                     Live Node Inventory Sync Active
+                  </p>
+               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -673,23 +818,7 @@ function WatchButton({ item, isWatched, currentCount, tier, email }: { item: Sto
   )
 }
 
-function SizeBadge({ size }: { size: string }) {
-  const getStyle = (s: string) => {
-    const n = parseFloat(s.replace(/[^0-9.]/g, ''))
-    if (isNaN(n)) return 'bg-ds-border text-ds-text-dim border-ds-surface/50'
-    if (n <= 5) return 'bg-ds-indigo-deep text-ds-indigo border-ds-indigo-border'
-    if (n <= 7) return 'bg-ds-blue-deep text-ds-blue border-ds-blue-border'
-    if (n <= 9) return 'bg-ds-cyan-deep text-ds-cyan border-ds-cyan-border'
-    if (n === 10) return 'bg-cyan-500/10 text-ds-cyan border-ds-cyan-border'
-    if (n <= 12) return 'bg-ds-orange-deep text-ds-orange border-ds-orange-border'
-    return 'bg-ds-red-deep text-red-100 border-ds-red-border'
-  }
-  return (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-transform hover:scale-110 cursor-default ${getStyle(size)}`}>
-      {size}
-    </div>
-  )
-}
+
 
 function FilterDropdown({ isOpen, options, selected, onToggle, onClear }: FilterDropdownProps) {
   if (!isOpen) return null

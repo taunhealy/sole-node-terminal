@@ -39,6 +39,16 @@ STORES = {
         "url": "https://www.nicekicks.com/category/sneaker-news/",
         "selector": "h2.entry-title a",
         "base_url": ""
+    },
+    "Sneaker News": {
+        "url": "https://sneakernews.com/",
+        "selector": "h4 a, h2 a",
+        "base_url": "https://sneakernews.com"
+    },
+    "Sole Retriever": {
+        "url": "https://www.soleretriever.com/",
+        "selector": "a.embla_slide h4, a[href^='/news/articles/'] p",
+        "base_url": "https://www.soleretriever.com"
     }
 }
 

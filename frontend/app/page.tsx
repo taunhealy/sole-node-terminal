@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Target, Activity, Shield, Box, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search } from 'lucide-react'
+import { Zap, Target, Activity, Shield, Box, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { db } from '@/lib/firebase'
@@ -106,23 +106,31 @@ export default function LandingPage() {
           <motion.div whileInView={{ opacity: 1, x: 0 }} initial={{ opacity: 0, x: -50 }} viewport={{ once: true }}>
             <span className="text-ds-blue font-black uppercase tracking-widest text-xs mb-4 block">The Challenge</span>
             <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">
-              Bigger than a <br /> <span className="text-ds-indigo">Losing Game.</span>
+              Unified <br /> <span className="text-ds-indigo">Intelligence.</span>
             </h2>
             <div className="space-y-6">
-              <div className="p-6 bg-ds-red-deep border border-ds-red-border/80 rounded-2xl shadow-[0_0_80px_rgba(239,68,68,0.08)]">
-                 <h4 className="text-white font-black uppercase text-xs mb-2">The Problem:</h4>
-                 <p className="text-gray-400 text-sm leading-relaxed">Resellers buy out stock before you have half a chance. Manually checking a variety of websites is time consuming, exhausting, and often results in missing your size entirely.</p>
+              <div className="group relative p-8 bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-ds-red/30 transition-all duration-500 shadow-2xl">
+                 <div className="absolute top-0 right-0 w-24 h-24 bg-ds-red/5 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-ds-red/10 transition-colors" />
+                 <h4 className="text-ds-red font-black uppercase text-[10px] tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <span className="w-4 h-px bg-ds-red/50" />
+                    The_Problem
+                 </h4>
+                 <p className="text-gray-300 text-base leading-relaxed font-medium">
+                    Resellers buy out stock before you have half a chance. Manually checking websites is <span className="text-white italic">exhausting</span>, and often results in missing your size entirely.
+                 </p>
               </div>
 
-              <div className="relative p-6 bg-ds-blue-deep border border-ds-blue-border/80 rounded-2xl shadow-[0_0_80px_rgba(0,200,83,0.15)] overflow-hidden group">
-                 {/* Seeping green glow behind */}
-                 <div className="absolute -inset-10 bg-ds-green/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+              <div className="group relative p-8 bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-ds-green/30 transition-all duration-500 shadow-2xl">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-ds-green/5 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-ds-green/10 transition-colors" />
                  
-                 <h4 className="relative text-white font-black uppercase text-xs mb-2 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_5px_rgba(0,200,83,0.5)] animate-pulse" />
-                    The Solution:
+                 <h4 className="text-ds-green font-black uppercase text-[10px] tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <span className="w-8 h-px bg-ds-green/50" />
+                    The_Solution
+                    <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_10px_rgba(0,200,83,0.5)] animate-pulse" />
                  </h4>
-                 <p className="relative text-gray-400 text-sm leading-relaxed">Save time and automate the hunt. SoleSeek levels the playing field by providing a unified terminal that tracks exclusive inventory 24/7. Secure your pair before they even start their bots.</p>
+                 <p className="text-gray-300 text-base leading-relaxed font-medium">
+                    Automate the hunt. <span className="text-white">SoleSeek</span> provides a unified terminal tracking exclusive inventory 24/7. Secure your pair <span className="text-ds-green font-bold italic">with zero-latency</span> market intelligence.
+                 </p>
               </div>
             </div>
           </motion.div>
@@ -175,12 +183,16 @@ export default function LandingPage() {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-ds-indigo text-ds-bg rounded-md font-black uppercase text-[10px] tracking-widest shadow-2xl z-20">Most_Demanded</div>
             <div className="p-12 rounded-[inherit] bg-[#1a1c22] flex flex-col h-full border border-ds-indigo/20 backdrop-blur-3xl shadow-[0_0_80px_rgba(129,140,248,0.15)] group relative overflow-hidden">
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-ds-indigo/10 blur-[100px] pointer-events-none" />
-              <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-ds-indigo">Pro_Interface</h4>
+              <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-ds-indigo">Pro_Seeker</h4>
               <div className="flex items-baseline gap-2 mb-10">
                 <span className="text-6xl font-black tracking-tight text-white">$12</span>
                 <span className="text-gray-500 text-sm font-black uppercase tracking-[0.3em]">/ Month</span>
               </div>
               <ul className="space-y-4 mb-12 text-left">
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-indigo">
+                  <DollarSign className="w-4 h-4" /> 
+                  Standard Features Plus:
+                </li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-indigo">
                   <Target className="w-4 h-4" /> 
                   1000 Watchlist Slots
@@ -189,14 +201,8 @@ export default function LandingPage() {
                   <Bell className="w-4 h-4 text-ds-indigo" /> 
                   WhatsApp, SMS, Email, Discord, Telegram Alerts
                 </li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-300 group-hover:text-white transition-colors">
-                  <Globe className="w-4 h-4 text-ds-indigo" /> 
-                  Multi-Region Node Access
-                </li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-300 group-hover:text-white transition-colors">
-                  <TrendingUp className="w-4 h-4 text-ds-indigo" /> 
-                  Advanced Price Analytics
-                </li>
+              
+               
               </ul>
               <div className="mt-auto space-y-4">
                  <PayPalSubscription planId="P-2UF78487X1571584RMCGZ4EQ" tier="Pro" />
@@ -221,65 +227,47 @@ export default function LandingPage() {
                    Stop tab-switching. SoleSeek aggregates live inventory from Shelflife, Jack Lemkus, Archive, and others into a single, high-frequency stream. Map colors, sizes, and price drops across the entire market in one unified interface.
                 </p>
              </div>
-             <div className="order-1 md:order-2 aspect-video bg-ds-surface border border-white/5 rounded-3xl relative overflow-hidden group shadow-2xl">
-                <div className="absolute inset-x-6 inset-y-6 bg-ds-bg rounded-2xl border border-white/5 p-8 flex flex-col gap-4">
-                   <div className="flex justify-between items-center mb-4">
-                      <div className="h-4 w-1/3 bg-ds-blue-deep rounded animate-pulse" />
-                      <div className="h-4 w-12 bg-ds-green/20 rounded" />
-                   </div>
-                   <div className="space-y-4">
-                      <div className="h-2 w-full bg-white/5 rounded" />
-                      <div className="h-2 w-4/5 bg-white/5 rounded" />
-                      <div className="h-2 w-full bg-linear-to-r from-ds-blue/20 to-transparent rounded" />
+             <div className="order-1 md:order-2 bg-ds-surface border border-white/5 rounded-3xl relative overflow-hidden group shadow-2xl">
+                <div className="absolute inset-0 bg-linear-to-t from-ds-bg via-transparent to-transparent opacity-60 pointer-events-none z-10" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-8 relative z-0">
+                   {[
+                      { name: 'Shelflife', color: 'bg-ds-orange' },
+                      { name: 'Jack Lemkus', color: 'bg-yellow-500' },
+                      { name: 'Archive', color: 'bg-white' },
+                      { name: 'Soul Gallery', color: 'bg-indigo-600' },
+                      { name: 'The Plug and Play', color: 'bg-teal-500' },
+                      { name: 'Court Order', color: 'bg-slate-400' },
+                      { name: 'Cape Union Mart', color: 'bg-purple-500' }
+                   ].map((store) => (
+                      <div key={store.name} className="flex items-center gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl group hover:border-white/30 transition-all">
+                         <div className={`w-1.5 h-1.5 rounded-full ${store.color} shadow-[0_0_8px_rgba(255,255,255,0.2)] animate-pulse`} />
+                         <span className="text-[9px] font-black uppercase tracking-widest text-ds-text-dim group-hover:text-white transition-colors">{store.name}</span>
+                         <div className="ml-auto px-1.5 py-0.5 rounded bg-ds-blue/10 border border-ds-blue/20 text-[7px] text-ds-blue font-black uppercase tracking-tighter">
+                            LIVE
+                         </div>
+                      </div>
+                   ))}
+                   <div className="flex items-center gap-3 bg-ds-blue/5 border border-ds-blue/20 p-4 rounded-2xl border-dashed">
+                      <div className="w-1.5 h-1.5 rounded-full bg-ds-blue/30 animate-ping" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-ds-blue/50">Next Store Syncing...</span>
                    </div>
                 </div>
-                <div className="absolute inset-0 bg-linear-to-t from-ds-bg via-transparent to-transparent opacity-60" />
              </div>
           </div>
         </div>
       </section>
 
-      {/* 📚 Blog Section */}
-      <section className="py-32 px-8 border-t border-white/5">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end mb-16 gap-8 text-left md:text-left">
-          <div>
-            <span className="text-ds-indigo/60 font-black uppercase tracking-widest text-xs mb-4 block">Intelligence Reports</span>
-            <h2 className="text-5xl font-black uppercase tracking-widest text-white">The <span className="text-ds-indigo">Insights</span></h2>
-          </div>
-          <Link href="/blog" className="text-sm font-black uppercase tracking-widest text-ds-indigo hover:text-white transition-colors flex items-center">View All Articles <ChevronRight className="w-4 h-4" /></Link>
-        </div>
+  
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {softwareBlogs.map((post: any, i: number) => (
-            <motion.a 
-               key={post.id} 
-               href={post.url}
-               whileHover={{ y: -6 }} 
-               className="group cursor-pointer block p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors relative"
-            >
-               <div className="aspect-[16/10] bg-white/5 border border-white/10 rounded-xl mb-6 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-linear-to-t from-black to-transparent opacity-40" />
-                  <div className="absolute inset-x-0 bottom-0 p-5 bg-linear-to-t from-black/80 to-transparent">
-                     <span className="text-ds-blue font-black uppercase text-[8px] tracking-[0.3em]">{post.category}</span>
-                  </div>
-               </div>
-               
-               <span className="text-[10px] text-ds-indigo/60 font-black uppercase tracking-widest mb-3 block">
-                 SoleSeek HQ | {post.date}
-               </span>
-               <h3 className="text-xl font-black uppercase mb-4 text-white group-hover:text-ds-indigo transition-colors leading-snug">
-                 {post.title}
-               </h3>
-               
-               <div className="flex items-center gap-2 text-[10px] font-black text-ds-text-dim uppercase tracking-widest group-hover:text-white transition-colors">
-                  READ_INTEL 
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform text-ds-indigo" />
-               </div>
-
-               {/* Animated subtle line */}
-               <div className="absolute bottom-0 left-6 right-6 h-px bg-ds-indigo/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-            </motion.a>
-          ))}
+      {/* 🚀 CTA Section */}
+      <section className="py-32 px-12 border-t border-white/5 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-ds-blue/20 blur-[120px] pointer-events-none" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tight mb-8 leading-tight">Ready to <span className="text-ds-blue italic">Level Up?</span></h2>
+          <p className="text-gray-400 text-lg mb-12 max-w-xl mx-auto font-medium">Gain the professional edge and dominate the SA market with elite monitoring.</p>
+          <Link href="/seek" className="inline-flex h-16 px-12 bg-white text-ds-bg rounded-2xl items-center font-black uppercase text-xs tracking-widest hover:bg-ds-blue hover:text-white transition-all active:scale-95 shadow-2xl">
+            Join the Resistance <ArrowRight className="w-4 h-4 ml-3" />
+          </Link>
         </div>
       </section>
 

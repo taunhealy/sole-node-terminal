@@ -101,7 +101,7 @@ export default function Navbar() {
             {!user ? (
               <button 
                 onClick={login}
-                className="flex items-center gap-2 bg-ds-blue text-white px-5 py-2.5 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-ds-bg transition-all shadow-[0_0_20px_rgba(96,165,250,0.3)]"
+                className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-ds-blue hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 Auth_Terminal

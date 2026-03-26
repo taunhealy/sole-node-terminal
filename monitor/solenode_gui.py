@@ -560,7 +560,9 @@ class SoleNodeApp(ctk.CTk):
             "Jack Lemkus": {"url": "https://www.lemkus.com/blogs/news", "selector": "a.article-card__title", "base": "https://www.lemkus.com"},
             "Archive": {"url": "https://blog.archivestore.co.za/news/", "selector": "h3.pp-content-grid-post-title a", "base": ""},
             "Shelflife": {"url": "https://www.shelflife.co.za/blog", "selector": ".blog-post-title a, .post-title a", "base": "https://www.shelflife.co.za"},
-            "Nice Kicks": {"url": "https://www.nicekicks.com/news/", "selector": "h2.entry-title a", "base": ""}
+            "Nice Kicks": {"url": "https://www.nicekicks.com/news/", "selector": "h2.entry-title a", "base": ""},
+            "Sneaker News": {"url": "https://sneakernews.com/", "selector": "h4 a, h2 a", "base": "https://sneakernews.com"},
+            "Sole Retriever": {"url": "https://www.soleretriever.com/", "selector": "a.embla_slide h4, a[href^='/news/articles/'] p", "base": "https://www.soleretriever.com"}
         }
         headers = {"User-Agent": self.user_agent}
         for name, cfg in STORES.items():

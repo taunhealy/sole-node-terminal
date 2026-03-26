@@ -51,15 +51,22 @@ export default function BlogPage() {
             </p>
           </div>
           
-          <div className="hidden lg:flex items-center gap-6 px-10 py-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-3xl shadow-2xl">
-            <div className="text-right">
-               <p className="text-[10px] font-black uppercase text-ds-text-dim tracking-widest mb-1">Intelligence Feed</p>
-               <p className="text-3xl font-black text-ds-indigo">{posts.length}</p>
+          <div className="hidden lg:flex items-center gap-10 px-12 py-8 bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-ds-blue/10 blur-[60px] -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10">
+               <p className="text-[10px] font-black uppercase text-ds-blue tracking-[0.2em] mb-2 flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-ds-blue animate-pulse" />
+                  Feed_Intelligence
+               </p>
+               <p className="text-5xl font-black text-white tracking-tighter">{posts.length}</p>
             </div>
-            <div className="w-px h-12 bg-white/10" />
-            <div className="text-right">
-               <p className="text-[10px] font-black uppercase text-ds-text-dim tracking-widest mb-1">Node Status</p>
-               <p className="text-3xl font-black text-white">Scraping</p>
+            <div className="w-px h-16 bg-white/10 mx-2" />
+            <div className="relative z-10">
+               <p className="text-[10px] font-black uppercase text-ds-green tracking-[0.2em] mb-2 flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-ds-green animate-ping" />
+                  Node_Status
+               </p>
+               <p className="text-5xl font-black text-white italic tracking-tighter">SCRAPING</p>
             </div>
           </div>
         </div>
@@ -68,13 +75,13 @@ export default function BlogPage() {
         <div className="flex flex-wrap items-center gap-3 mb-12">
            <button 
              onClick={() => setStoreFilter(null)}
-             className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${!storeFilter ? 'bg-white text-ds-bg border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'bg-white/5 text-ds-text-dim border-white/10 hover:border-white/20'}`}
-           >All Feeds</button>
-           {['Shelflife', 'Jack Lemkus', 'Archive', 'Nice Kicks'].map(store => (
+             className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${!storeFilter ? 'bg-white text-ds-bg border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'bg-white/5 text-ds-text-dim border-white/10 hover:border-white/20'}`}
+           >Global_Feed</button>
+           {['Shelflife', 'Jack Lemkus', 'Archive', 'Nice Kicks', 'Sneaker News', 'Sole Retriever'].map(store => (
              <button 
                key={store}
                onClick={() => setStoreFilter(store)}
-               className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${storeFilter === store ? 'bg-ds-indigo text-white border-ds-indigo shadow-[0_0_20px_rgba(129,140,248,0.3)]' : 'bg-white/5 text-ds-text-dim border-white/10 hover:border-white/20'}`}
+               className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${storeFilter === store ? 'bg-ds-blue text-white border-ds-blue shadow-[0_0_20px_rgba(96,165,250,0.3)]' : 'bg-white/5 text-ds-text-dim border-white/10 hover:border-white/20'}`}
              >{store}</button>
            ))}
         </div>
