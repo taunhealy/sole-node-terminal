@@ -7,3 +7,4 @@ curl_cffi
 customtkinter
 undetected-chromedriver
 pyinstaller
+google-generativeai

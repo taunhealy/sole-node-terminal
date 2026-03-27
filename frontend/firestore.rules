@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Let anyone view stock data (READ ONLY)
+    // 1. Core Stock & Logs (Public)
     match /stock/{item} {
       allow read: if true;
       allow write: if false; 
@@ -11,21 +11,36 @@ service cloud.firestore {
        allow write: if false;
     }
     
-    // 2. Intelligence Reports (READ ONLY)
+    // 2. Market Intelligence (Public)
     match /store_blogs/{blog} {
        allow read: if true;
        allow write: if false;
     }
 
-    // 3. User alerts (Read/Create/Delete — needed for watch & unwatch)
+    // 3. User Data (Public Read/Write for now to fix access)
     match /user_alerts/{alert} {
-       allow read, create, delete: if true;
-       allow update: if false;
+       allow read, write: if true;
     }
-
-    // 4. User profiles (Needed for tiers)
     match /users/{userId} {
        allow read, write: if true;
+    }
+
+    // 4. Fleet Dashboard (Essential for Commander dashboard)
+    match /active_nodes/{nodeId} {
+       allow read, write: if true;
+    }
+    match /hive_signals/{signalId} {
+       allow read, create: if true;
+       allow update, delete: if false;
+    }
+    match /sniper_tasks/{taskId} {
+       allow read, write: if true;
+    }
+
+    // 5. Global Fallback (Allow read for debugging, but safer to specify per collection)
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false; 
     }
   }
 }

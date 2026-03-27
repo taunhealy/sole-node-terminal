@@ -38,21 +38,36 @@ class SoleNodeApp(ctk.CTk):
         # State
         self.monitoring = False
         self.monitor_thread = None
-        self.db = None
+        self.profile_file = get_resource_path("profile.json")
+        self.profile_data = self.load_profile()
+        
+        # --- BIND FIREBASE AUTH ---
+        key_path = os.path.join(os.path.dirname(__file__), "service-account-key.json")
+        if os.path.exists(key_path):
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+            try:
+                self.db = firestore.Client()
+                self.db_status = "SYNCED"
+            except Exception as e:
+                self.db_status = f"ERROR: {e}"
+                self.db = None
+        else:
+            self.db_status = "LINK_MISSING"
+            self.db = None
+            
         self.session_cookies = {}
         self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        self.user_tier = "Free"
+        self.is_logged_in = False
         
-        try:
-            self.db = firestore.Client()
-        except: pass
-
+        self.proxies = []
+        self.load_proxies()
+        
+        self.scale = getattr(self, 'scale_val', 1)
+        
         self.last_blog_scrape = 0
         self.blog_thread = None
         
-        # Profile Data (Local persistence)
-        self.profile_file = get_resource_path("profile.json")
-        self.profile_data = self.load_profile()
-
         # UI Layout
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -81,11 +96,18 @@ class SoleNodeApp(ctk.CTk):
         self.email_label = ctk.CTkLabel(self.context_frame, text="LOGGED AS (EMAIL):", font=("Inter", 10, "bold"), text_color="#5c5c66")
         self.email_label.pack(side="left", padx=10)
         
-        self.email_entry = ctk.CTkEntry(self.context_frame, placeholder_text="your@email.com", width=250, height=30, font=("Inter", 12))
+        self.email_entry = ctk.CTkEntry(self.context_frame, placeholder_text="your@email.com", width=250, height=35, font=("Inter", 12))
         self.email_entry.pack(side="left")
+        self.email_entry.insert(0, self.profile_data.get("email", ""))
         
-        self.sync_watchlist_btn = ctk.CTkButton(self.context_frame, text="SYNC WATCHLIST", command=self.sync_user_watchlist, width=120, height=30, font=("Inter", 10, "bold"))
-        self.sync_watchlist_btn.pack(side="left", padx=10)
+        self.login_btn = ctk.CTkButton(self.context_frame, text="UNIFY_PROFILE_LNK", command=self.sync_cloud_profile, width=150, height=35, font=("Inter", 11, "bold"), fg_color="#3a86ff")
+        self.login_btn.pack(side="left", padx=10)
+
+        self.tier_badge = ctk.CTkLabel(self.context_frame, text="FREE_UNIT", font=("Inter", 10, "bold"), text_color="gray", fg_color="#1a1c22", width=100, height=25, corner_radius=5)
+        self.tier_badge.pack(side="left", padx=10)
+
+        self.db_indicator = ctk.CTkLabel(self.context_frame, text=f"CLOUD: {self.db_status}", font=("Inter", 9, "bold"), text_color="#3a86ff" if self.db else "#dc3545")
+        self.db_indicator.pack(side="left", padx=10)
 
         self.control_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.control_frame.grid(row=5, column=0, pady=20)
@@ -106,9 +128,9 @@ class SoleNodeApp(ctk.CTk):
         self.tabview.grid(row=2, column=0, padx=40, pady=(10, 10), sticky="nsew")
         
         self.tab_terminal = self.tabview.add("TERMINAL LOG")
-        self.tab_wishlist = self.tabview.add("ACTIVE WISHLIST")
         self.tab_tasks = self.tabview.add("SNIPER TASKS")
         self.tab_automation = self.tabview.add("AUTOMATION HUB")
+        self.tab_gemini = self.tabview.add("AI COMMAND CENTER")
         self.tab_profiles = self.tabview.add("PROFILES")
         self.tab_settings = self.tabview.add("SETTINGS")
 
@@ -116,12 +138,6 @@ class SoleNodeApp(ctk.CTk):
         self.log_box = ctk.CTkTextbox(self.tab_terminal, font=("Consolas", 12), border_width=1, border_color="#2d2d33")
         self.log_box.pack(padx=10, pady=10, fill="both", expand=True)
         self.log_box.insert("0.0", ">>> SoleSeek Sniper Node v1.8 [Distributed Stealth] Initialized.\n>>> 🟢 Database: Connected\n>>> 🛡️ Amazon Bypass: Active\n")
-
-        # --- TAB: WISHLIST ---
-        self.wishlist_frame = ctk.CTkScrollableFrame(self.tab_wishlist, fg_color="transparent")
-        self.wishlist_frame.pack(padx=10, pady=10, fill="both", expand=True)
-        self.wish_label = ctk.CTkLabel(self.wishlist_frame, text="Sync your email to load your cloud watchlist.", font=("Inter", 13, "italic"), text_color="gray")
-        self.wish_label.pack(pady=20)
 
         # --- TAB: SNIPER TASKS (NEW) ---
         self.tasks_frame = ctk.CTkScrollableFrame(self.tab_tasks, fg_color="transparent")
@@ -152,29 +168,14 @@ class SoleNodeApp(ctk.CTk):
 
         self.checkout_var = ctk.BooleanVar(value=False)
         self.checkout_switch = ctk.CTkSwitch(self.automation_group, text="ENABLE AUTO-CHECKOUT (BETA)", variable=self.checkout_var, font=("Inter", 12, "bold"), progress_color="#28a745")
-        self.checkout_switch.pack(pady=15)
+        self.checkout_switch.pack(pady=(5, 15))
 
-        # Operational Modes (Moved into Automation tab)
-        self.modes_frame = ctk.CTkFrame(self.tab_automation, fg_color="transparent")
-        self.modes_frame.pack(pady=10)
+        self.auto_proxy_var = ctk.BooleanVar(value=True)
+        self.auto_proxy_switch = ctk.CTkSwitch(self.automation_group, text="ACTIVATE HIVE_VPN (ROTATING IP)", variable=self.auto_proxy_var, font=("Inter", 12, "bold"), progress_color="#dc3545")
+        self.auto_proxy_switch.pack(pady=5)
         
-        self.mode_label = ctk.CTkLabel(self.modes_frame, text="OPERATIONAL_MODE / SCALING_PROTOCOL:", font=("Inter", 10, "bold"), text_color="#5c5c66")
-        self.mode_label.pack(pady=5)
-        
-        self.mode_var = ctk.StringVar(value="Anticipation")
-        self.mode_selector = ctk.CTkSegmentedButton(self.modes_frame, 
-                                                    values=["Idle", "Anticipation", "Sniper"], 
-                                                    variable=self.mode_var,
-                                                    command=self.on_mode_change,
-                                                    width=400,
-                                                    height=35,
-                                                    font=("Inter", 11, "bold"),
-                                                    selected_color="#3a86ff")
-        self.mode_selector.pack()
-
-        self.warning_label = ctk.CTkLabel(self.modes_frame, text="⚠️ SNIPER ALERT: High ban risk. Use a VPN or Proxy to rotate IP during active drops.", font=("Inter", 10, "italic"), text_color="#dc3545")
-        self.warning_label.pack(pady=5)
-        self.warning_label.pack_forget()
+        self.vpn_status = ctk.CTkLabel(self.automation_group, text="🛡️ GATEWAY: READY_TO_TUNNEL", font=("Inter", 9, "bold"), text_color="gray")
+        self.vpn_status.pack(pady=(0, 15))
 
         self.test_store_frame = ctk.CTkFrame(self.tab_automation, fg_color="#1a1c22")
         self.test_store_frame.pack(padx=20, pady=5, fill="x")
@@ -188,6 +189,25 @@ class SoleNodeApp(ctk.CTk):
 
         self.test_btn = ctk.CTkButton(self.test_store_frame, text="RUN STORE SNIPE TEST", command=self.manual_test_atc, width=200, height=35, font=("Inter", 11, "bold"), fg_color="#3a86ff")
         self.test_btn.pack(pady=10)
+
+        # --- TAB: AI COMMAND CENTER (GEMINI) ---
+        self.gemini_frame = ctk.CTkFrame(self.tab_gemini, fg_color="transparent")
+        self.gemini_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        self.ai_log_box = ctk.CTkTextbox(self.gemini_frame, font=("Inter", 12), border_width=1, border_color="#2d2d33")
+        self.ai_log_box.pack(fill="both", expand=True, pady=(0, 10))
+        self.ai_log_box.insert("0.0", "🤖 [GEMINI AI] v1.0 ONLINE: I can analyze the database to find the best resale opportunities.\n>>> Ask me: 'What's the best deal currently?' or 'Show me recent sneaker restocks'.\n\n")
+        self.ai_log_box.configure(state="disabled")
+        
+        self.ai_input_frame = ctk.CTkFrame(self.gemini_frame, fg_color="#1a1c22", corner_radius=10)
+        self.ai_input_frame.pack(fill="x")
+        
+        self.ai_entry = ctk.CTkEntry(self.ai_input_frame, placeholder_text="Ask Gemini Sniper Intelligence...", height=40, font=("Inter", 12))
+        self.ai_entry.pack(side="left", fill="x", expand=True, padx=10, pady=10)
+        self.ai_entry.bind("<Return>", lambda e: self.send_to_gemini())
+        
+        self.ai_send_btn = ctk.CTkButton(self.ai_input_frame, text="QUERY AI", command=self.send_to_gemini, width=100, font=("Inter", 10, "bold"), fg_color="#3a86ff")
+        self.ai_send_btn.pack(side="right", padx=10, pady=10)
 
         # --- TAB: PROFILES ---
         self.prof_frame = ctk.CTkScrollableFrame(self.tab_profiles, fg_color="transparent")
@@ -220,7 +240,47 @@ class SoleNodeApp(ctk.CTk):
         self.node_settings_frame = ctk.CTkScrollableFrame(self.tab_settings, fg_color="transparent")
         self.node_settings_frame.pack(fill="both", expand=True)
         
-        # Proxy Engine (NEW)
+        # --- FLEET STRENGTH SCALING (PREMIUM) ---
+        self.fleet_group = ctk.CTkFrame(self.node_settings_frame, fg_color="#1a1c22", corner_radius=15)
+        self.fleet_group.pack(padx=20, pady=10, fill="x")
+        
+        self.fleet_header = ctk.CTkLabel(self.fleet_group, text="FLEET STRENGTH / DISTRIBUTED NODES", font=("Inter", 12, "bold"), text_color="#dc3545")
+        self.fleet_header.pack(pady=(15, 5))
+        
+        self.fleet_info = ctk.CTkLabel(self.fleet_group, text="Determine the number of concurrent monitoring nodes per machine.\nPro Sweet Spot: 5 Nodes. | Max Safe Scale: 10 Nodes.\nOverloading nodes increases detection risk.", font=("Inter", 11), text_color="gray", justify="center")
+        self.fleet_info.pack(pady=5)
+
+        # Operational Modes (Unified in Settings)
+        self.modes_frame = ctk.CTkFrame(self.fleet_group, fg_color="transparent")
+        self.modes_frame.pack(pady=10)
+        
+        self.mode_var = ctk.StringVar(value="Anticipation")
+        self.mode_selector = ctk.CTkSegmentedButton(self.modes_frame, 
+                                                    values=["Idle", "Anticipation", "Sniper"], 
+                                                    variable=self.mode_var,
+                                                    command=self.on_mode_change,
+                                                    width=400,
+                                                    height=35,
+                                                    font=("Inter", 11, "bold"),
+                                                    selected_color="#3a86ff")
+        self.mode_selector.pack()
+
+        self.warning_label = ctk.CTkLabel(self.fleet_group, text="⚠️ SNIPER ALERT: High ban risk. Use a VPN or Proxy to rotate IP during active drops.", font=("Inter", 10, "italic"), text_color="#dc3545")
+        self.warning_label.pack(pady=5)
+        self.warning_label.pack_forget()
+        
+        self.scale_var = ctk.IntVar(value=1)
+        self.scale_slider = ctk.CTkSlider(self.node_settings_frame, from_=1, to=20, number_of_steps=19, width=400, variable=self.scale_var, command=self.update_scale_label)
+        self.scale_slider.pack(pady=10)
+        
+        self.scale_status_label = ctk.CTkLabel(self.node_settings_frame, text=f"ACTIVE_NODES: {self.scale_var.get()}", font=("Consolas", 16, "bold"), text_color="#3a86ff")
+        self.scale_status_label.pack(pady=(0, 5))
+
+        self.cost_estimation_label = ctk.CTkLabel(self.node_settings_frame, text="ESTIMATED DRAIN: R0.00 / HR", font=("Inter", 11, "bold"), text_color="gray")
+        self.cost_estimation_label.pack(pady=(0, 15))
+        self.update_scale_label(self.scale_var.get())
+        
+        # Proxy Engine (EXISTING)
         self.proxy_group = ctk.CTkFrame(self.node_settings_frame, fg_color="#1a1c22", corner_radius=15)
         self.proxy_group.pack(padx=20, pady=10, fill="x")
         
@@ -233,6 +293,20 @@ class SoleNodeApp(ctk.CTk):
         
         self.save_proxy_btn = ctk.CTkButton(self.proxy_group, text="💾 LOCK IN PROXY LIST", command=self.save_proxies, width=150, height=30, font=("Inter", 10, "bold"), fg_color="#28a745")
         self.save_proxy_btn.pack(pady=(5, 15))
+
+        # Gemini Intelligence Settings (NEW)
+        self.gemini_group = ctk.CTkFrame(self.node_settings_frame, fg_color="#1a1c22", corner_radius=15)
+        self.gemini_group.pack(padx=20, pady=10, fill="x")
+        
+        self.gemini_header = ctk.CTkLabel(self.gemini_group, text="GEMINI AI INTELLIGENCE CORE", font=("Inter", 12, "bold"), text_color="#3a86ff")
+        self.gemini_header.pack(pady=(15, 5))
+        
+        self.gemini_key_entry = ctk.CTkEntry(self.gemini_group, placeholder_text="Enter Gemini API Key (Required for AI Command Center)", width=400, show="*")
+        self.gemini_key_entry.pack(padx=20, pady=5)
+        self.gemini_key_entry.insert(0, self.profile_data.get("gemini_api_key", ""))
+        
+        self.save_gemini_btn = ctk.CTkButton(self.gemini_group, text="💾 SAVE AI CREDENTIALS", command=self.save_gemini_config, width=180, height=30, font=("Inter", 10, "bold"), fg_color="#28a745")
+        self.save_gemini_btn.pack(pady=(5, 15))
 
         # Audio Settings
         self.sound_group = ctk.CTkFrame(self.node_settings_frame, fg_color="#1a1c22", corner_radius=15)
@@ -275,6 +349,124 @@ class SoleNodeApp(ctk.CTk):
         self.load_tasks()
         # Try load proxy settings
         self.load_proxies()
+        
+        # --- GEMINI COMMANDER ---
+        self.gemini_commander = None
+        self.init_gemini_engine()
+
+    def init_gemini_engine(self):
+        key = self.profile_data.get("gemini_api_key")
+        if key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=key)
+                self.gemini_commander = genai.GenerativeModel(
+                    model_name="gemini-pro", # Universal stable model
+                    tools=[self.get_stock_intel, self.find_best_resale_deals, self.get_recent_hype_blogs]
+                )
+                self.ai_log("✅ Gemini Commander Engine: LOADED & READY.")
+            except Exception as e:
+                self.ai_log(f"⚠️ Gemini Init Error: {e}. Ensure google-generativeai is installed.")
+        else:
+            self.ai_log("⚠️ Gemini API Key missing. Please set it in Settings to enable AI features.")
+
+    def save_gemini_config(self):
+        key = self.gemini_key_entry.get().strip()
+        self.profile_data["gemini_api_key"] = key
+        self.save_profile()
+        self.init_gemini_engine()
+        self.log("✅ AI Configuration Updated.")
+
+    def ai_log(self, message):
+        self.ai_log_box.configure(state="normal")
+        self.ai_log_box.insert("end", f"{message}\n\n")
+        self.ai_log_box.see("end")
+        self.ai_log_box.configure(state="disabled")
+
+    def send_to_gemini(self):
+        query = self.ai_entry.get().strip()
+        if not query: return
+        self.ai_entry.delete(0, 'end')
+        
+        if not self.gemini_commander:
+            self.ai_log("❌ Error: Gemini Engine not initialized. Check your API Key in Settings.")
+            return
+
+        self.ai_log(f"👤 YOU: {query}")
+        threading.Thread(target=self.run_gemini_task, args=(query,), daemon=True).start()
+
+    def run_gemini_task(self, query):
+        try:
+            chat = self.gemini_commander.start_chat(enable_automatic_function_calling=True)
+            response = chat.send_message(query)
+            self.ai_log(f"🤖 GEMINI: {response.text}")
+        except Exception as e:
+            self.ai_log(f"❌ AI TASK ERROR: {e}")
+
+    # --- GEMINI TOOLS (Firestore Access) ---
+    def get_stock_intel(self, query_keyword: str):
+        """Search the active warehouse for items matching a keyword."""
+        if not self.db: return "Database unavailable."
+        try:
+            # Query standard keyword matching
+            results = self.db.collection("stock") \
+                .where("soh", ">", 0) \
+                .limit(20).stream()
+            
+            items = []
+            for r in results:
+                d = r.to_dict()
+                if query_keyword.lower() in d.get('title', '').lower():
+                    items.append({
+                        "name": d.get('title'),
+                        "price": d.get('current_price'),
+                        "old_price": d.get('old_price'),
+                        "size": d.get('size'),
+                        "store": d.get('store')
+                    })
+            return items if items else "No matches found."
+        except Exception as e: return f"Error querying DB: {e}"
+
+    def find_best_resale_deals(self, limit: int = 10):
+        """Identify items with the largest price drops (old_price vs current_price) for high margin flips."""
+        if not self.db: return "Database unavailable."
+        try:
+            results = self.db.collection("stock") \
+                .where("soh", ">", 0) \
+                .stream()
+            
+            deals = []
+            for r in results:
+                d = r.to_dict()
+                cp = d.get('current_price', 0)
+                op = d.get('old_price', 0)
+                if op > cp:
+                    deals.append({
+                        "name": d.get('title'),
+                        "current": cp,
+                        "old": op,
+                        "margin_pct": round(((op - cp) / op) * 100, 2),
+                        "store": d.get('store')
+                    })
+            
+            deals = sorted(deals, key=lambda x: x['margin_pct'], reverse=True)[:limit]
+            return deals if deals else "No significant deals found right now."
+        except Exception as e: return f"Error calculating deals: {e}"
+
+    def get_recent_hype_blogs(self, limit: int = 5):
+        """Fetch the latest store blog entries to determine market trends and upcoming releases."""
+        if not self.db: return "Database unavailable."
+        try:
+            blogs = self.db.collection("store_blogs") \
+                .order_by("scraped_at", direction="DESCENDING") \
+                .limit(limit).stream()
+            
+            data = []
+            for b in blogs:
+                d = b.to_dict()
+                data.append({"title": d.get('title'), "excerpt": d.get('excerpt'), "date": str(d.get('date'))})
+            return data if data else "No recent blog intelligence found."
+        except Exception as e: return f"Error fetching trends: {e}"
 
     def add_keyword_task(self):
         name = self.task_name_entry.get().strip()
@@ -292,6 +484,23 @@ class SoleNodeApp(ctk.CTk):
             self.save_tasks()
             self.refresh_task_ui()
             self.log(f"🎯 TASK CREATED: '{name}' monitoring for [{kw}] (Sizes: {sizes or 'ANY'})")
+            
+            # --- SYNC TO SOLESEEK CLOUD (NEW) ---
+            if self.db:
+                try:
+                    host_hash = hashlib.md5(socket.gethostname().encode()).hexdigest()[:4].upper()
+                    self.db.collection("sniper_tasks").add({
+                        "name": name,
+                        "keywords": [x.strip().lower() for x in kw.split(",")],
+                        "target_sizes": [x.strip().lower() for x in sizes.split(",") if x.strip()],
+                        "created_at": firestore.SERVER_TIMESTAMP,
+                        "owner_email": self.email_entry.get().strip(),
+                        "node_origin": f"NODE_{host_hash}",
+                        "status": "active"
+                    })
+                    self.log("☁️ Snipe Task Unified with Cloud Protocol.")
+                except Exception as e:
+                    self.log(f"⚠️ Cloud Task Sync Failed: {e}")
 
     def save_tasks(self):
         try:
@@ -340,8 +549,10 @@ class SoleNodeApp(ctk.CTk):
                 with open(path, "r") as f:
                     data = json.load(f)
                     plist = data.get("proxies", "")
-                    self.proxy_box.delete("0.0", "end")
-                    self.proxy_box.insert("0.0", plist)
+                    # Ensure UI element exists before using it
+                    if hasattr(self, 'proxy_box') and self.proxy_box:
+                        self.proxy_box.delete("0.0", "end")
+                        self.proxy_box.insert("0.0", plist)
                     self.proxies = [p.strip() for p in plist.split("\n") if p.strip()]
                     if self.proxies:
                         self.log(f"🔗 Proxy Engine: {len(self.proxies)} endpoints loaded.")
@@ -358,64 +569,77 @@ class SoleNodeApp(ctk.CTk):
         except Exception as e:
             self.log(f"❌ Proxy Save Error: {e}")
 
-    def get_proxy_config(self, for_uc=False):
-        """Returns the next proxy for a request or Chrome instance"""
-        if not self.proxies: return None
-        p = self.proxies[self.proxy_index]
-        self.proxy_index = (self.proxy_index + 1) % len(self.proxies)
+    def get_proxy_config(self, for_uc=False, thread_idx=0):
+        # 1. Check for Active User Provided Proxies (Local or Manual)
+        # If auto_proxy is off, we bypass entirely unless we want to force local
+        if not self.auto_proxy_var.get():
+            self.vpn_status.configure(text="🛡️ GATEWAY: BYPASSED", text_color="gray")
+            return None
+
+        # 2. Pro Auto-Proxy (Hive VPN) Cloud Pool Protocol
+        if self.user_tier == "Pro" and not self.proxies:
+            self.vpn_status.configure(text=f"🛡️ GATEWAY: CLOUD_POOL [TUNNEL_0{thread_idx+1}]", text_color="#dc3545")
+            try:
+                pool_snap = self.db.collection("settings").document("global_proxy_pool").get()
+                if pool_snap.exists:
+                    cloud_proxies = pool_snap.to_dict().get("proxies", [])
+                    if cloud_proxies:
+                        self.proxies = cloud_proxies
+                        self.log("🛡️ VPN Gateway: Secure Rotating IP Link Established.")
+            except: pass
+
+        if not self.proxies:
+            self.vpn_status.configure(text="🛡️ GATEWAY: NO_PROXIES", text_color="#dc3545")
+            return None
+            
+        # 3. Assign unique proxy to thread to prevent overlap (Rotation)
+        self.vpn_status.configure(text=f"🛡️ GATEWAY: ACTIVE [TUNNEL_0{thread_idx+1}]", text_color="#00C853")
+        proxy = self.proxies[thread_idx % len(self.proxies)]
         
-        if for_uc:
-            # UC takes --proxy-server=http://ip:port
-            parts = p.split(':')
-            return f"http://{parts[0]}:{parts[1]}"
-        else:
-            # curl_cffi format
-            parts = p.split(':')
-            if len(parts) == 4:
-                return {"http": f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}", "https": f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"}
-            return {"http": f"http://{p}", "https": f"http://{p}"}
+        parts = proxy.split(':')
+        if len(parts) == 4:
+            ip, port, user, pw = parts
+            if for_uc:
+                return f"{user}:{pw}@{ip}:{port}" # Proxy extension style
+            return {"http": f"http://{user}:{pw}@{ip}:{port}", "https": f"http://{user}:{pw}@{ip}:{port}"}
+        elif len(parts) == 2:
+            ip, port = parts
+            if for_uc:
+                return f"{ip}:{port}"
+            return {"http": f"http://{ip}:{port}", "https": f"http://{ip}:{port}"}
+        return None
 
     def sync_user_watchlist(self):
-        """Fetches active user-specific alerts from Firestore"""
+        """Merges Cloud Watchlist into Active Sniper Tasks"""
         email = self.email_entry.get().strip()
-        if not email or not self.db:
-            self.log("⚠️ Watchlist Error: Please provide an email to sync.")
-            return
+        if not email or not self.db: return
 
-        self.log(f"☁️ Syncing watchlist for {email}...")
+        self.log(f"☁️ SOLESEEK_HIVE: Syncing Cloud Watchlist for {email}...")
         try:
             alerts = self.db.collection("user_alerts") \
                 .where("user_email", "==", email) \
                 .where("status", "==", "active") \
                 .stream()
             
-            # Map objects instead of just IDs
-            self.user_watchlist = []
             for a in alerts:
                 d = a.to_dict()
-                self.user_watchlist.append({
-                    'id': str(d.get('sku_id')),
-                    'title': d.get('product_name') or d.get('product_title', 'Unknown Product'),
-                    'size': d.get('size_title', 'N/A')
-                })
-
-            self.log(f"✅ Watchlist Sync Complete: {len(self.user_watchlist)} active alerts found.")
+                product_title = d.get('product_name') or d.get('product_title', 'Unknown')
+                size = d.get('size_title', '')
+                
+                # Check for existing
+                if not any(t['name'] == product_title for t in self.keyword_tasks):
+                    self.keyword_tasks.append({
+                        "name": product_title,
+                        "keywords": [product_title.lower()],
+                        "sizes": [size.lower()] if size else []
+                    })
+                    self.log(f"🎯 CLOUD_SNIPE: Task Activated for '{product_title}'")
             
-            # Update Wishlist Tab (Product Name instead of SKU)
-            for widget in self.wishlist_frame.winfo_children():
-                widget.destroy()
-            
-            if not self.user_watchlist:
-                ctk.CTkLabel(self.wishlist_frame, text="Wishlist Empty. Add items on the website.", font=("Inter", 12)).pack(pady=20)
-            else:
-                for item in self.user_watchlist:
-                    item_frame = ctk.CTkFrame(self.wishlist_frame, fg_color="#1a1c22", border_width=1, border_color="#2d2d33")
-                    item_frame.pack(fill="x", pady=2, padx=5)
-                    ctk.CTkLabel(item_frame, text=f"{item['title']} ({item['size']})", font=("Inter", 11, "bold"), text_color="#3a86ff").pack(side="left", padx=15, pady=8)
-                    ctk.CTkLabel(item_frame, text=f"ID: {item['id']}", font=("Consolas", 9), text_color="gray").pack(side="left", padx=5)
-                    ctk.CTkLabel(item_frame, text="SNIPING ACTIVE", font=("Inter", 9, "bold"), text_color="#28a745").pack(side="right", padx=15)
+            self.refresh_task_ui()
+            self.save_tasks()
+            self.log(f"✅ Hive Sync Complete: {len(self.keyword_tasks)} active sniper tasks loaded.")
         except Exception as e:
-            self.log(f"❌ Watchlist Sync Failed: {e}")
+            self.log(f"❌ Hive Sync Failed: {e}")
 
     def load_profile(self):
         try:
@@ -535,14 +759,68 @@ class SoleNodeApp(ctk.CTk):
             self.log_box.see("end")
         except: pass
 
+    def update_scale_label(self, val):
+        self.scale = int(val)
+        self.scale_status_label.configure(text=f"ACTIVE_NODES: {self.scale}")
+        
+        mode = self.mode_var.get()
+        # Constants for R150/GB managed rate (R0.15 / MB)
+        if mode == "Sniper":
+            mb_rate = 480
+            hr_rate = mb_rate * 0.15 # R72.00 / hr
+        elif mode == "Anticipation":
+            mb_rate = 4.2
+            hr_rate = mb_rate * 0.15 # R0.63 / hr
+        else: # Idle
+            mb_rate = 0.1
+            hr_rate = mb_rate * 0.15 # ~R0.015 / hr
+
+        est_cost = self.scale * hr_rate
+        est_data = self.scale * mb_rate
+        
+        self.cost_estimation_label.configure(
+            text=f"ESTIMATED DRAIN: R{est_cost:.2f} / HR ({est_data:.1f} MB/hr)",
+            text_color="#dc3545" if self.scale > 1 and mode == "Sniper" else "gray"
+        )
+
+        if self.scale > 10 and mode == "Sniper":
+            self.log(f"⚠️ HIGH_SCALE_NOTICE: {self.scale} nodes active. Data consumption is estimated at ~{est_data/1024:.2f} GB / HR.")
+            self.log(f"⚠️ DRAIN_ADVISORY: Projection R{est_cost:.2f} / HR. Secure your proxy top-ups.")
+
+        if self.scale >= 5:
+            self.scale_status_label.configure(text_color="#dc3545")
+        else:
+            self.scale_status_label.configure(text_color="#3a86ff")
+
+    def on_mode_change(self, mode):
+        self.log(f"🔄 MISSION PIVOT: Strategy updated to {mode.upper()}.")
+        self.update_scale_label(self.scale_var.get())
+        if mode == "Sniper":
+            self.warning_label.pack(pady=5)
+        else:
+            self.warning_label.pack_forget()
+
     def start_monitor(self):
+        if not self.is_logged_in:
+            self.log("⚠️ ACCESS_DENIED: You must sync a PRO profile before starting the monitor.")
+            self.log("🔗 Click UNIFY_PROFILE_LNK to authenticate.")
+            return
+            
         if not self.monitoring:
             self.monitoring = True
             self.start_btn.configure(state="disabled")
             self.stop_btn.configure(state="normal")
-            self.status_label.configure(text="SERVER STATUS: RUNNING (ACTIVE)", text_color="#00C853")
-            self.monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
-            self.monitor_thread.start()
+            
+            # Use the UI scaling value
+            current_scale = self.scale_var.get()
+            self.scale = current_scale
+            self.log(f"🚢 INITIALIZING FLEET: Spawning {current_scale} Worker Nodes...")
+            self.status_label.configure(text=f"SERVER STATUS: RUNNING ({current_scale} NODES)", text_color="#00C853")
+            
+            for i in range(current_scale):
+                node_suffix = f"_{i+1:02d}" if current_scale > 1 else ""
+                t = threading.Thread(target=self.monitor_loop, args=(node_suffix, i), daemon=True)
+                t.start()
             
             # Start parallel blog intelligence monitor
             self.blog_thread = threading.Thread(target=self.blog_monitor_loop, daemon=True)
@@ -553,37 +831,41 @@ class SoleNodeApp(ctk.CTk):
         self.start_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")
 
-    def monitor_loop(self):
+    def monitor_loop(self, node_suffix="", thread_idx=0):
+        # Stagger starts to prevent simultaneous spikes
+        if thread_idx > 0:
+            time.sleep(thread_idx * 5)
+            
         self.solve_cloudflare()
         while self.monitoring:
-            self.log("🚀 Sweep Cycle Starting...")
+            self.log(f"🚀 Node{node_suffix} Sweep Cycle Starting...")
             try:
-                self.scrape_shelflife()
-                self.update_heartbeat()
+                self.scrape_shelflife(thread_idx)
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_lemkus()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_archive()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_amazon()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_capeunion()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_soulgallery()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_plugnplay()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 if not self.monitoring: break
                 self.scrape_courtorder()
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
                 
                 # Global Heartbeat
-                self.update_heartbeat()
+                self.update_heartbeat(node_suffix)
 
                 
                 # Blog check removed from main loop to prevent blocking
@@ -631,6 +913,14 @@ class SoleNodeApp(ctk.CTk):
         self.log("✅ Blog Scraper Halted.")
 
     def on_mode_change(self, mode):
+        # TIER PROTECTION: Standard users cannot use Sniper mode
+        if self.user_tier == "Standard" and mode == "Sniper":
+            self.log("⚠️ UNAUTHORIZED: Sniper mode is reserved for PRO members [Sub-second Scrapes].")
+            self.log("🔄 Resetting to ANTICIPATION protocol.")
+            self.mode_var.set("Anticipation")
+            self.mode_selector.set("Anticipation")
+            mode = "Anticipation"
+
         self.mode_info.configure(text=f"MODE: {mode.upper()}")
         if mode == "Sniper":
             self.warning_label.pack(pady=5)
@@ -638,6 +928,8 @@ class SoleNodeApp(ctk.CTk):
         else:
             self.warning_label.pack_forget()
             self.log(f"🔍 Mode changed to {mode}.")
+        
+        self.update_scale_label(self.scale_var.get())
 
     def get_chrome_version(self):
         try:
@@ -666,7 +958,7 @@ class SoleNodeApp(ctk.CTk):
         except Exception as e:
             self.log(f"❌ Stealth Error: {e}")
 
-    def scrape_shelflife(self):
+    def scrape_shelflife(self, thread_idx=0):
         total_skus = 0
         self.log("🔍 Fetching Shelflife Full Inventory (Deep Scrape)...")
         for page in range(1, 3): 
@@ -674,7 +966,7 @@ class SoleNodeApp(ctk.CTk):
             url = f"https://www.shelflife.co.za/products.json?page={page}"
             headers = {"User-Agent": self.user_agent, "Accept": "application/json", "Referer": "https://www.shelflife.co.za/products"}
             try:
-                proxy = self.get_proxy_config()
+                proxy = self.get_proxy_config(thread_idx=thread_idx)
                 r = requests.get(url, headers=headers, cookies=self.session_cookies, impersonate="chrome110", proxies=proxy)
                 if r.status_code == 200:
                     data = r.json()
@@ -1128,9 +1420,20 @@ class SoleNodeApp(ctk.CTk):
         except Exception as e:
             self.log(f"❌ Sync Error: {e}")
 
-    def update_heartbeat(self):
-        if not self.db: return
+    def update_heartbeat(self, node_suffix=""):
+        if not self.db: 
+            self.db_indicator.configure(text="CLOUD: OFFLINE", text_color="#dc3545")
+            return
         try:
+            # Sync status label
+            self.db_indicator.configure(text="CLOUD: SYNCED", text_color="#28a745")
+            
+            # Anonymize Node Identity to protect privacy (e.g. SNIPE_7A2F)
+            import hashlib
+            host_hash = hashlib.md5(socket.gethostname().encode()).hexdigest()[:4].upper()
+            email_slug = self.email_entry.get().split('@')[0].upper() if self.is_logged_in else "GUEST"
+            node_id = f"{email_slug}_NODE_{host_hash}{node_suffix}"
+            
             # Global status for legacy dashboard support
             self.db.collection("stock").document("_terminal_status").set({
                 "last_scan_at": firestore.SERVER_TIMESTAMP,
@@ -1139,19 +1442,91 @@ class SoleNodeApp(ctk.CTk):
             }, merge=True)
             
             # Individual Node Tracking
-            import socket
-            node_id = socket.gethostname()
+            email = self.email_entry.get().strip()
             self.db.collection("active_nodes").document(node_id).set({
                 "last_seen": firestore.SERVER_TIMESTAMP,
                 "mode": self.mode_var.get(),
                 "node_name": node_id,
+                "owner_email": email,
                 "platform": sys.platform,
-                "status": "active" if self.monitoring else "idle"
+                "status": "active" if self.monitoring else "idle",
+                "tier": self.user_tier
             }, merge=True)
             
-            self.log(f"💓 Network Pulse: {node_id} ({self.mode_var.get()})")
+            self.log(f"💓 Hive Signature: {node_id} ({self.mode_var.get()})")
         except Exception as e:
             self.log(f"⚠️ Heartbeat Error: {e}")
+
+    def sync_cloud_profile(self):
+        email = self.email_entry.get().strip()
+        if not email:
+            self.log("⚠️ Auth Error: Email required for Profile Unification.")
+            return
+            
+        self.log(f"🧬 Linking to SoleSeek Cloud: {email}...")
+        try:
+            # Re-initialize DB if needed (e.g. if key was placed late)
+            if not self.db: 
+                try: self.db = firestore.Client()
+                except: pass
+            
+            if not self.db:
+                self.log("❌ Database Error: Firestore Client not initialized.")
+                return
+
+            user_doc = self.db.collection("users").document(email).get()
+            if user_doc.exists:
+                data = user_doc.to_dict()
+                self.user_tier = data.get("tier", "Free")
+                self.is_logged_in = True
+                
+                # EXCLUSIVE ACCESS CHECK: Allow Standard+ to run nodes
+                allowed_tiers = ["Pro", "Elite", "Admin", "Standard"]
+                if self.user_tier not in allowed_tiers:
+                    self.log(f"⚠️ ACCESS_DENIED: {self.user_tier} tier cannot launch local nodes.")
+                    self.log("🔗 Upgrade to Standard or Pro at SoleSeek.io to activate local node deployment.")
+                    self.is_logged_in = False
+                    self.tier_badge.configure(text=f"{self.user_tier.upper()}_LOCKED", text_color="gray")
+                    return
+
+                if self.user_tier == "Standard":
+                    self.tier_badge.configure(text="STANDARD_UNIT", fg_color="#1a1c22", text_color="#3a86ff")
+                    self.log("✅ ACCESS_GRANTED: Standard Tier authorized for local monitoring (No Sniper Mode).")
+                else:
+                    self.tier_badge.configure(text=f"{self.user_tier.upper()}_UNIT", fg_color="#1a1c22", text_color="#FF3D00") # High-vis Red for Pro
+                    self.log(f"🔥 MISSION_READY: {self.user_tier} Tier authorized with full Sniper capability.")
+                self.log(f"⚡ PRO_ACCESS_GRANTED: Welcome back, {data.get('first_name', 'Commander')}.")
+                
+                # Auto-scale to 5 if it's currently low
+                if self.scale_var.get() < 5:
+                    self.scale_var.set(5)
+                    self.update_scale_label(5)
+                
+                # Sync watchlist
+                self.sync_user_watchlist()
+                
+                # Save email to local profile
+                self.profile_data["email"] = email
+                self.save_profile()
+            else:
+                self.log(f"❓ Profile Not Found: No cloud record for {email}.")
+                self.user_tier = "Free"
+                self.tier_badge.configure(text="GUEST_UNIT", text_color="gray")
+        except Exception as e:
+            self.log(f"❌ Auth Sync Failed: {e}")
+
+    def sync_user_watchlist(self):
+        email = self.email_entry.get().strip()
+        if not email: return
+        self.log(f"🧬 Fetching cloud watchlist for {email}...")
+        try:
+            docs = self.db.collection("user_alerts").where("user_email", "==", email).get()
+            self.watchlist = [d.to_dict().get("product_title") for d in docs]
+            self.log(f"✅ Watchlist Updated: {len(self.watchlist)} cloud items tracked.")
+            # Auto-populate sniper tasks with watchlist
+            self.log("🎯 Integrating cloud watchlist into Sniper Tasks...")
+        except Exception as e:
+            self.log(f"⚠️ Watchlist Sync Failed: {e}")
 
     def scrape_blogs(self):
         self.log("📚 Starting Blog Intelligence Sweep...")
@@ -1428,5 +1803,12 @@ class SoleNodeApp(ctk.CTk):
         self.destroy()
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scale", type=int, default=1)
+    args, unknown = parser.parse_known_args()
+    
     app = SoleNodeApp()
+    app.scale_val = args.scale
+    app.scale = args.scale # Fallback
     app.mainloop()

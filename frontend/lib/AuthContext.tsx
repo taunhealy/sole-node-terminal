@@ -10,8 +10,8 @@ interface AppUser {
   uid: string
   email: string | null
   displayName: string | null
-  tier: 'Free' | 'Standard' | 'Pro' | 'Elite'
-  status: 'active' | 'paused' | 'inactive'
+  tier: 'Free' | 'Standard' | 'Pro' | 'Elite' | 'Admin'
+  status: 'active' | 'paused' | 'inactive' | 'trial'
 }
 
 interface AuthContextType {

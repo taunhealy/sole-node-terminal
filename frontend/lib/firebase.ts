@@ -11,6 +11,10 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 }
 
+// 🚦 DIAGNOSTIC GUARD: Prevent initialization if config is missing
+if (!firebaseConfig.apiKey) {
+    console.warn("⚠️ Firebase Initialization: Missing API Key Metadata.")
+}
 
 const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)

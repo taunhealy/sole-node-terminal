@@ -19,12 +19,16 @@ export default function Navbar() {
   const { user, login, logout, loading, appUser } = useAuth()
 
   useEffect(() => {
+    // 1. Terminal Heartbeat
     const heartbeatUnsub = onSnapshot(doc(db, 'stock', '_terminal_status'), (snap) => {
       if (snap.exists() && snap.data()?.last_scan_at) {
         setLastScanDate(new Date(snap.data().last_scan_at.seconds * 1000))
       }
+    }, (err) => {
+      console.error("Navbar Heartbeat Error:", err)
     })
 
+    // 2. Fallback Scan Data
     const fallbackQ = query(collection(db, 'stock'), orderBy('last_updated', 'desc'), limit(1))
     const fallbackUnsub = onSnapshot(fallbackQ, (snap) => {
       if (!snap.empty) {
@@ -33,9 +37,14 @@ export default function Navbar() {
           setLastScanDate(prev => !prev ? new Date(d.last_updated.seconds * 1000) : prev)
         }
       }
+    }, (err) => {
+      console.error("Navbar Fallback Error:", err)
     })
 
-    return () => { heartbeatUnsub(); fallbackUnsub() }
+    return () => { 
+      if (typeof heartbeatUnsub === 'function') heartbeatUnsub(); 
+      if (typeof fallbackUnsub === 'function') fallbackUnsub(); 
+    }
   }, [])
 
   useEffect(() => {
@@ -56,6 +65,8 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Snipe', path: '/nodes' },
+    { name: 'AI Intel', path: '/ai-intel' },
     { name: 'Seek', path: '/seek' },
     { name: 'Compare', path: '/compare' },
     { name: 'Blog', path: '/blog' }
@@ -66,6 +77,7 @@ export default function Navbar() {
   }, [pathname])
 
   useEffect(() => {
+    /*
     if (canvasRef.current) {
       gsap.to(canvasRef.current, { opacity: 0.4, duration: 3, ease: 'power2.out' })
       gsap.to('.swirl-blob', {
@@ -74,20 +86,21 @@ export default function Navbar() {
         ease: 'sine.inOut'
       })
     }
+    */
   }, [])
 
   const [hoveredPath, setHoveredPath] = useState<string | null>(null)
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 h-20 bg-ds-bg/85 backdrop-blur-3xl border-b border-white/5 z-[100] px-6 flex items-center justify-between">
-        {/* 🔮 Swirl Background */}
-        <div ref={canvasRef} className="absolute inset-0 pointer-events-none bg-gradient-radial from-ds-blue/10 via-ds-indigo/5 to-transparent z-0">
-          <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-ds-blue/20 blur-[130px] rounded-full swirl-blob animate-pulse" />
-          <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-ds-indigo/25 blur-[130px] rounded-full swirl-blob" />
-          <div className="absolute top-1/2 left-3/4 w-[600px] h-[600px] bg-ds-cyan/20 blur-[130px] rounded-full swirl-blob" />
-        </div>
+      {/* 🔮 Global Decorative Swirl Background */}
+      <div ref={canvasRef} className="fixed inset-0 pointer-events-none bg-ds-blue/5 z-[-1] overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-ds-blue/10 blur-[130px] rounded-full swirl-blob" />
+        <div className="absolute top-0 left-1/2 w-[600px] h-[600px] bg-ds-indigo/15 blur-[130px] rounded-full swirl-blob" />
+        <div className="absolute top-0 left-3/4 w-[600px] h-[600px] bg-ds-cyan/10 blur-[130px] rounded-full swirl-blob" />
+      </div>
 
+      <nav className="fixed top-0 left-0 right-0 h-20 bg-ds-bg/85 backdrop-blur-3xl border-b border-white/5 z-[100] px-6 flex items-center justify-between">
         <div className="relative z-10 flex items-center justify-between w-full">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-ds-blue-deep flex items-center justify-center text-ds-blue shadow-[0_0_20px_rgba(30,58,138,0.4)] transition-transform group-hover:scale-110">
