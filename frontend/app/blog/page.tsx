@@ -51,11 +51,11 @@ export default function BlogPage() {
             </p>
           </div>
           
-          <div className="hidden lg:flex items-center gap-12 px-10 py-6 bg-ds-surface/50 border border-white/10 rounded-2xl backdrop-blur-3xl shadow-2xl relative overflow-hidden group hover:border-ds-indigo/30 transition-all duration-500">
+          <div className="hidden lg:flex items-center gap-16 px-12 py-8 bg-ds-surface/50 border border-white/10 rounded-2xl backdrop-blur-3xl shadow-2xl relative overflow-hidden group hover:border-ds-indigo/30 transition-all duration-500 min-w-max">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ds-indigo/10 blur-[60px] -translate-y-1/2 translate-x-1/2 group-hover:bg-ds-indigo/20 transition-colors" />
             <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-ds-indigo/30 to-transparent" />
             
-            <div className="relative z-10">
+            <div className="relative z-10 shrink-0">
                <span className="text-[10px] font-black uppercase text-ds-indigo tracking-[0.2em] mb-3 flex items-center gap-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-ds-indigo shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
                    Feed_Intelligence
@@ -66,9 +66,9 @@ export default function BlogPage() {
                </div>
             </div>
 
-            <div className="w-px h-12 bg-white/10" />
+            <div className="w-px h-12 bg-white/10 shrink-0" />
 
-            <div className="relative z-10">
+            <div className="relative z-10 shrink-0">
                <span className="text-[10px] font-black uppercase text-ds-green tracking-[0.2em] mb-3 flex items-center gap-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
                    Node_Status

@@ -18,6 +18,7 @@ import {
   RefreshCw,
   LayoutDashboard
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { db } from '@/lib/firebase'
 import { 
@@ -30,6 +31,9 @@ import {
 } from 'firebase/firestore'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { useAuth } from '@/lib/AuthContext'
+import { doc, updateDoc, increment } from 'firebase/firestore'
+import Link from 'next/link'
 
 // Initialize Gemini (Hardcoded for dev testing as requested)
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyDimaZuD7ClHDTVDCgpRqF1us3Cqn3H8tY'
@@ -47,35 +51,51 @@ interface Message {
 const QUICK_ACTIONS = [
   {
     title: "Best Flip Opportunity",
-    query: "Determine the best stock to purchase for reselling based on current price drops.",
+    query: "Identify the top 3 high-heat items for quick resale profit based on current demand.",
     icon: TrendingUp,
     color: "text-ds-green",
     bg: "bg-ds-green/10"
   },
   {
-    title: "Highest Margin Sales",
-    query: "Which sneakers are currently on sale with the highest margin compared to their original price?",
+    title: "Early Access Intel",
+    query: "Analyze latest blog/intel syncs for upcoming 'unreleased' heat not yet on shelves.",
+    icon: Sparkles,
+    color: "text-ds-blue",
+    bg: "bg-ds-blue/10"
+  },
+  {
+    title: "Scarcity Warning",
+    query: "Which high-demand items have critically low SOH (below 3 units) globally?",
     icon: Target,
     color: "text-ds-red",
     bg: "bg-ds-red/10"
   },
   {
-    title: "Market Intel",
-    query: "Analyze recent blog trends to suggest which brands are currently in high demand.",
-    icon: Sparkles,
-    color: "text-ds-blue",
-    bg: "bg-ds-blue/10"
+    title: "Hype vs Reality",
+    query: "Compare current hive inventory against global hype trends to find sleep deals.",
+    icon: LayoutDashboard,
+    color: "text-white",
+    bg: "bg-white/5"
   }
 ]
 
 export default function AIRecommendations() {
+  const { user, appUser, login } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [showLimitModal, setShowLimitModal] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatInterfaceRef = useRef<HTMLDivElement>(null)
+  const chatLogRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatLogRef.current) {
+      chatLogRef.current.scrollTo({
+        top: chatLogRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }
 
   useEffect(() => {
@@ -96,9 +116,34 @@ export default function AIRecommendations() {
   }
 
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return
+    if (!text.trim() || isTyping) return
+
+
+    // 0. Check Auth & Usage Limit
+    if (!user) {
+        login()
+        return
+    }
+
+    const currentUsage = appUser?.ai_usage || 0
+    const currentLimit = appUser?.ai_limit || 10
+
+    if (currentUsage >= currentLimit) {
+        setShowLimitModal(true)
+        return
+    }
     
     setInput('')
+    const isFree = appUser?.tier === 'Free' || !appUser?.tier
+    const credits = appUser?.ai_credits || 0
+    const usage = appUser?.ai_usage || 0
+    const limitCount = appUser?.ai_limit || 10
+
+    if (isFree && credits <= 0 && usage >= limitCount) {
+        setShowLimitModal(true)
+        return
+    }
+
     const userMsg: Message = { role: 'user', content: text }
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
@@ -121,18 +166,32 @@ export default function AIRecommendations() {
         USER QUESTION: ${text}
         
         INSTRUCTIONS:
-        1. Analyze the price drops (current_price vs old_price) to find resale opportunities.
-        2. Mention specific stores where items are available.
-        3. Keep recommendations concise and tactical (speed is key).
-        4. If no good deals are found, suggest items based on hype trends from blogs.
+        1. Target high-demand "heat" (Jordan, Bape, Yeezy, limited Nike drops).
+        2. Prioritize low Stock-on-Hand (soh) items as they indicate high scarcity/velocity.
+        3. Identify restocks (items recently updated in the hive).
+        4. Provide tactical resale advice based on hype-demand, not just price-drops.
+        5. YOU MUST INCLUDE THE DIRECT LINK (url) for each product you recommend.
+        6. Format links as [Secure_Item](url) or similar.
       `
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
       const result = await model.generateContent(contextPrompt)
       const response = await result.response
       
       const assistantMsg: Message = { role: 'assistant', content: response.text() }
       setMessages(prev => [...prev, assistantMsg])
+
+      // 2. Increment Usage in DB
+      if (user?.email) {
+          const userRef = doc(db, 'users', user.email)
+          const updateObj: any = {
+              ai_usage: increment(1)
+          }
+          if (appUser?.tier === 'Free' && (appUser?.ai_credits || 0) > 0) {
+              updateObj.ai_credits = increment(-1)
+          }
+          await updateDoc(userRef, updateObj)
+      }
     } catch (error: any) {
       console.error("SOLESEEK_AI_ERROR:", error)
       const errorMsg = error?.message || "Intelligence Link Interrupted."
@@ -169,10 +228,10 @@ export default function AIRecommendations() {
            </motion.div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
            
            {/* 🛠️ LEFT: QUICK ACTION BUTTONS */}
-           <div className="lg:col-span-4 space-y-6">
+           <div className="lg:col-span-3 space-y-6">
               <h3 className="text-sm font-black uppercase italic tracking-widest text-ds-blue flex items-center gap-3 px-2">
                  <LayoutDashboard className="w-4 h-4" />
                  Tactical_Shortcuts
@@ -197,32 +256,10 @@ export default function AIRecommendations() {
                     </motion.button>
                  ))}
               </div>
-
-              {/* 📊 LIVE DB STATUS */}
-              <div className="bg-ds-blue/5 border border-ds-blue/20 p-8 rounded-[40px] relative overflow-hidden">
-                 <div className="flex items-center gap-4 mb-6">
-                    <Database className="w-5 h-5 text-ds-blue" />
-                    <span className="text-xs font-black uppercase tracking-widest italic">Inventory_Intel_Stream</span>
-                 </div>
-                 <div className="space-y-4 opacity-50">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                       <span>Database Handshake</span>
-                       <span className="text-ds-green">Stable</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                       <span>Neural Context Limit</span>
-                       <span>30K Tokens</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                       <span>Inference Model</span>
-                       <span className="text-ds-blue">Gemini-2.0-Flash</span>
-                    </div>
-                 </div>
-              </div>
            </div>
 
-           {/* 💬 RIGHT: CHAT INTERFACE */}
-           <div className="lg:col-span-8 flex flex-col h-[700px] bg-[#1a1c22]/50 border border-white/10 rounded-[40px] overflow-hidden backdrop-blur-3xl shadow-2xl relative">
+           {/* 💬 CENTER: CHAT INTERFACE */}
+           <div ref={chatInterfaceRef} className="lg:col-span-6 flex flex-col h-[700px] bg-[#1a1c22]/50 border border-white/10 rounded-[40px] overflow-hidden backdrop-blur-3xl shadow-2xl relative">
               
               {/* CHAT HEADER */}
               <div className="p-8 border-b border-white/5 flex items-center justify-between bg-black/20">
@@ -245,7 +282,7 @@ export default function AIRecommendations() {
               </div>
 
               {/* CHAT LOG */}
-              <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <div ref={chatLogRef} className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                  {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center opacity-20 filter grayscale py-20">
                        <MessageSquare className="w-16 h-16 mb-6 text-ds-blue" />
@@ -270,7 +307,27 @@ export default function AIRecommendations() {
                                    <Sparkles className="w-4 h-4" />
                                 </div>
                              )}
-                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                             <div className="flex-1">
+                                <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-invert max-w-none prose-p:my-2 prose-li:my-1">
+                                    <ReactMarkdown 
+                                      components={{
+                                        a: (props) => (
+                                          <a 
+                                            {...props} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-[#0a1c4b] text-white text-[11px] font-black uppercase rounded-2xl no-underline border border-white/10 hover:bg-[#061234] transition-all shadow-xl"
+                                          >
+                                            <Zap className="w-3.5 h-3.5" />
+                                            Secure_Item
+                                          </a>
+                                        )
+                                      }}
+                                    >
+                                      {msg.content}
+                                    </ReactMarkdown>
+                                </div>
+                             </div>
                              {msg.role === 'user' && (
                                 <div className="w-8 h-8 rounded-lg bg-white/20 text-white flex items-center justify-center shrink-0 mt-1">
                                    <User className="w-4 h-4" />
@@ -311,7 +368,94 @@ export default function AIRecommendations() {
                  </div>
               </div>
            </div>
+
+           {/* 📊 RIGHT: LIVE DB STATUS */}
+           <div className="lg:col-span-3 space-y-6">
+              <div className="bg-[#1a1c22]/50 border border-white/10 p-8 rounded-[40px] backdrop-blur-2xl relative overflow-hidden h-[700px] flex flex-col">
+                 <div className="flex items-center gap-4 mb-10">
+                    <div className="p-3 rounded-xl bg-ds-blue/10 text-ds-blue border border-ds-blue/20">
+                       <Database className="w-5 h-5 shadow-[0_0_15px_#3a86ff]" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] italic text-white/90">Inventory_Stream</span>
+                 </div>
+
+                 <div className="space-y-8 flex-1">
+                    <div className="group">
+                       <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-3 group-hover:text-ds-blue transition-colors">Neural_Context_Limit</span>
+                       <div className="flex items-center justify-between">
+                          <span className="text-2xl font-black italic tracking-tighter">30K <span className="text-xs font-medium not-italic text-gray-600 ml-1">Tokens</span></span>
+                          <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
+                       </div>
+                    </div>
+
+                    <div className="group">
+                       <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-3">Inference_Model</span>
+                       <span className="text-xl font-black uppercase tracking-tight text-ds-blue">Gemini-2.0-Flash</span>
+                       <div className="pt-8 border-t border-white/5 group">
+                        <div className="flex justify-between items-center mb-4">
+                           <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">AI_Prompts_Remaining</span>
+                           <span className={`text-xs font-black italic ${((appUser?.ai_credits || 0) <= 0 && (appUser?.tier === 'Free' || !appUser?.tier)) ? 'text-ds-red' : 'text-ds-blue'}`}>
+                              {appUser?.tier === 'Pro' || appUser?.tier === 'Elite' ? 'UNLIMITED' : `${appUser?.ai_credits || 0} PROMPTS`}
+                           </span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 mb-4">
+                           <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: appUser?.tier === 'Pro' ? '100%' : `${Math.min(((appUser?.ai_credits || 0) / 100) * 100, 100)}%` }}
+                              className={`h-full ${appUser?.tier === 'Pro' ? 'bg-ds-blue' : 'bg-ds-indigo'} shadow-[0_0_10px_#818cf8]`}
+                           />
+                        </div>
+                        <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em] leading-relaxed">
+                           Current Tier 
+                           <span className="text-white ml-1">({appUser?.tier || 'Free'})</span> 
+                           {appUser?.tier === 'Free' ? ' - Modular Intelligence Active.' : ' - Priority Uplink Stable.'}
+                        </p>
+                     </div>
+                    </div>
+                 </div>
+
+                 <div className="mt-auto pt-8 border-t border-white/5">
+                    <button onClick={() => window.location.href='/ai-intel'} className="w-full py-4 bg-ds-blue/10 hover:bg-ds-blue text-ds-blue hover:text-white border border-ds-blue/30 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] transition-all">
+                       Upgrade_Quota
+                    </button>
+                 </div>
+              </div>
+           </div>
         </div>
+
+        {/* 🔮 LIMIT REACHED MODAL */}
+        <AnimatePresence>
+          {showLimitModal && (
+             <div className="fixed inset-0 z-150 flex items-center justify-center px-6">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLimitModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1a1c22] border border-white/10 p-10 rounded-[40px] w-full max-w-lg relative z-20 shadow-2xl overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-5">
+                      <Shield className="w-32 h-32 text-ds-red" />
+                   </div>
+                   
+                   <h2 className="text-2xl font-black italic uppercase mb-2">QUOTA_REACHED</h2>
+                   <p className="text-ds-red text-[10px] uppercase font-black tracking-widest mb-8 italic">Intelligence Link Throttled</p>
+                   
+                   <p className="text-gray-400 text-sm leading-relaxed mb-10">
+                      You have exhausted your tier-allocated intelligence credits ({appUser?.ai_limit}). 
+                      Upgrade your license or purchase a Neural Boost to restore your uplink.
+                   </p>
+
+                   <div className="space-y-4">
+                       <Link href="/ai-intel" className="block w-full py-5 bg-ds-blue text-white rounded-2xl text-center font-black uppercase tracking-[0.2em] shadow-xl shadow-ds-blue/20 transition-all hover:scale-[1.02]">
+                          UPGRADE_TO_PRO (UNLIMITED_AI)
+                       </Link>
+                       <button className="w-full py-5 bg-ds-indigo border border-ds-indigo/30 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all hover:bg-ds-indigo/80 shadow-lg shadow-ds-indigo/20">
+                          BUY_AI_TOPUP (R100 for 100)
+                       </button>
+                      <button onClick={() => setShowLimitModal(false)} className="w-full py-3 text-gray-500 font-black uppercase text-[9px] tracking-widest">
+                         STAY_OFFLINE
+                      </button>
+                   </div>
+                </motion.div>
+             </div>
+          )}
+        </AnimatePresence>
 
       </main>
 

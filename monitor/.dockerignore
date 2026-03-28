@@ -1,0 +1,28 @@
+# Exclude local secrets — injected via Cloud Run env vars instead
+service-account-key.json
+.env
+profile.json
+
+# Exclude desktop-only dependencies
+solenode_gui.py
+blog_monitor.py
+local_node.py
+build_exe.py
+build/
+dist/
+*.spec
+*.fix
+
+# Exclude dev/test files
+__pycache__/
+*.pyc
+simulate_atc_test.py
+quick_test.py
+quick_diagnostic_blog.py
+check_*.py
+debug_gui.py
+crash_log.txt
+tasks.json
+test_restock.py
+upgrade_user.py
+ELITE_ROADMAP.md

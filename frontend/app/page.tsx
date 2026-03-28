@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Target, Activity, Shield, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search, DollarSign } from 'lucide-react'
+import { Zap, Target, Activity, Shield, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search, DollarSign, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { db } from '@/lib/firebase'
@@ -37,7 +37,7 @@ export default function LandingPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-10 backdrop-blur-xl shadow-2xl">
             <Zap className="w-4 h-4 text-ds-blue fill-ds-blue animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ds-blue">Node_v1.7: Cloud Sync Protocol Active</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ds-blue">Node_v1.8: Cloud Sync Protocol Active</span>
           </div>
           
           <h1 className="text-7xl md:text-[140px] font-black uppercase tracking-tight leading-[0.8] mb-10 select-none">
@@ -70,9 +70,9 @@ export default function LandingPage() {
             <div className="w-14 h-14 rounded-2xl bg-ds-blue-deep flex items-center justify-center text-ds-blue mb-8 shadow-[0_0_25px_rgba(96,165,250,0.2)] border border-ds-blue/30">
               <Target className="w-7 h-7" />
             </div>
-            <h3 className="text-2xl font-black uppercase tracking-tight mb-4 text-white">Restock Alerts</h3>
+            <h3 className="text-2xl font-black uppercase tracking-tight mb-4 text-white">Stock Alerts</h3>
             <p className="text-gray-400 leading-relaxed font-medium">
-              Set alerts for Restocks, New Arrivals & Sales. Our server checks stores every 2 minutes.
+              Set alerts for new Arrivals, Restocks & Sales.
             </p>
           </motion.div>
 
@@ -82,7 +82,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-2xl font-black uppercase tracking-tight mb-4 text-white">Real-Time Sync</h3>
             <p className="text-gray-400 leading-relaxed font-medium">
-              Real-time Firestore synchronization ensures you get restock alerts within seconds of inventory changes. No page refreshes. Ever.
+              Real-time synchronization ensures you get stock alerts within seconds of inventory changes.
             </p>
           </motion.div>
 
@@ -122,7 +122,7 @@ export default function LandingPage() {
               
               <div className="space-y-6">
                  {[
-                    { icon: Monitor, title: 'Multi-Node Deployment', desc: 'Run unlimited local nodes across different machines or servers for massive scale.' },
+                    { icon: Monitor, title: 'Multi-Node Deployment', desc: 'Local nodes run across different machines or servers for scale and fast stock monitoring.' },
                     { icon: Globe, title: 'Rotating Hive Proxies', desc: 'Pro users gain access to our secure residential proxy pool for advanced IP rotation.' },
                     { icon: Activity, title: '3-Tier Speed Control', desc: 'Choose between Idle (1hr), Anticipation (60s), and Sniper (0.5s) polling modes.' },
                     { icon: Shield, title: 'Stealth Browser Engine', desc: 'Built-in undetected-driver technology to survive invasive bot-detection security.' }
@@ -151,7 +151,7 @@ export default function LandingPage() {
                  <div className="absolute bottom-6 left-6 right-6 p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl z-20">
                     <div className="flex items-center gap-3">
                        <Globe className="w-5 h-5 text-ds-blue animate-pulse" />
-                       <span className="text-[10px] font-black uppercase tracking-widest text-white">PRO_MODE: Distributed_Fleet_Active</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-white">MULTI-NODE_V1.8: Distributed_Fleet_Active</span>
                     </div>
                  </div>
               </div>
@@ -193,7 +193,7 @@ export default function LandingPage() {
                            Standard_Access
                         </h4>
                         <p className="text-gray-300 text-base leading-relaxed font-medium">
-                           Leverage our centralized monitoring engine. Access over 20+ boutiques with automated restock detection across 20 watchlist slots.
+                           Leverage our centralized monitoring engine. Access over 20+ boutiques with automated restock detection across 100 watchlist slots.
                         </p>
                      </div>
                      <div className="group relative p-8 bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-ds-blue/30 transition-all duration-500 shadow-2xl">
@@ -280,19 +280,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🔮 All Features Grid */}
+      {/* 🔮 All Features Grid (Desktop App / Pro Engine Focus) */}
       <section className="py-32 px-12 border-t border-white/5 bg-ds-bg relative">
         <div className="max-w-7xl mx-auto">
            <div className="text-center mb-24">
-              <span className="text-ds-blue font-black uppercase tracking-widest text-[10px] mb-4 block">Deep Capabilities</span>
-              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">Platform <span className="text-white">Features.</span></h2>
+              <span className="text-ds-blue font-black uppercase tracking-widest text-[10px] mb-4 block">Engine_Capabilities: SoleSeek Sniper Hub</span>
+              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">Desktop <span className="text-white">Features.</span></h2>
            </div>
            
-           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {[
                  { icon: Zap, title: "DTC Engine", desc: "Low-latency direct-to-cart protocols for instant checkout ready sessions." },
+                 { icon: MapPin, title: "SA Latency Advantage", desc: "Global bots fail on SA sites due to distance. SoleSeek runs in Cape Town for 1ms local response times." },
                  { icon: Globe, title: "Distributed Flux", desc: "Multi-node localized monitoring for maximum stealth and scale." },
-                 { icon: Shield, title: "Stealth Stealth", desc: "Industrial-grade anti-bot evasion built into every scraper." },
+                 { icon: Shield, title: "Stealth", desc: "Industrial-grade anti-bot evasion built into every scraper." },
                  { icon: Activity, title: "3-Tier Speed", desc: "Adjustable polling frequencies from 1hr down to 0.5 seconds." },
                  { icon: Bell, title: "Omni-Alerts", desc: "WhatsApp, Cloud Sync, and Desktop notifications in real-time." },
                  { icon: Database, title: "Hive Sync", desc: "Global restock databases synchronized across the entire network." },
@@ -318,13 +319,66 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 📡 Market Intelligence: The Terminal Experience */}
+      <section className="py-32 px-12 border-t border-white/5 bg-ds-bg relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-ds-indigo/5 blur-[150px] rounded-full pointer-events-none" />
+        <div className="max-w-7xl mx-auto">
+           <div className="text-center mb-24">
+              <span className="text-ds-indigo font-black uppercase tracking-widest text-[10px] mb-4 block">Market Intelligence</span>
+              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">The Terminal <span className="text-white">Experience.</span></h2>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                 { icon: TrendingUp, title: "Trending Heat", desc: "Instantly view the most sought-after pairs currently being monitored across all nodes." },
+                 { icon: Zap, title: "New Releases", desc: "A live feed of the latest arrivals hitting South African boutique inventory systems." },
+                 { icon: Activity, title: "Restock Tracker", desc: "Real-time logs of stock quantity updates, ensuring you see restocks as they happen." },
+                 { icon: Star, title: "Smart Watchlist", desc: "Tag specific SKUs and receive instant notifications when your size becomes available." }
+              ].map((feat, idx) => (
+                 <motion.div 
+                    key={idx}
+                    whileInView={{ opacity: 1, y: 0 }} 
+                    initial={{ opacity: 0, y: 30 }} 
+                    transition={{ delay: idx * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-10 rounded-[40px] bg-white/2 border border-white/5 hover:border-ds-indigo/30 transition-all group relative overflow-hidden"
+                 >
+                    <div className="absolute inset-0 bg-ds-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10">
+                       <div className="w-14 h-14 rounded-2xl bg-ds-indigo/10 border border-ds-indigo/30 flex items-center justify-center text-ds-indigo mb-8 shadow-2xl group-hover:scale-110 transition-transform">
+                          <feat.icon className="w-7 h-7" />
+                       </div>
+                       <h4 className="text-lg font-black uppercase text-white mb-4 tracking-tight italic">{feat.title}</h4>
+                       <p className="text-sm text-gray-400 leading-relaxed font-medium">{feat.desc}</p>
+                    </div>
+                 </motion.div>
+              ))}
+           </div>
+
+           <div className="flex justify-center mt-20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                <Link href="/seek" className="group relative h-16 px-12 bg-ds-indigo text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all shadow-[0_0_40px_rgba(129,140,248,0.2)] active:scale-95 overflow-hidden">
+                  <div className="absolute inset-0 bg-white opacity-0" />
+                  Launch Terminal
+                  <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </motion.div>
+           </div>
+        </div>
+      </section>
+
       {/* 💎 Pricing Section */}
       <section id="pricing" className="py-20 px-8 bg-ds-bg relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-ds-indigo/5 blur-[150px] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto text-center mb-24 relative z-10">
           <span className="text-ds-indigo font-black uppercase tracking-[0.3em] text-[10px] mb-6 block">Premium Access</span>
-          <h2 className="text-6xl italic md:text-8xl font-black uppercase tracking-tight mb-8">Choose Your <span className="text-white">Node</span></h2>
+          <h2 className="text-6xl italic md:text-8xl font-black uppercase tracking-tight mb-8">Choose Your <span className="text-white">Style</span></h2>
           <p className="text-gray-400 max-w-xl mx-auto font-medium">Professional grade intelligence, priced for serious seekers. Secure your edge today.</p>
         </div>
         
@@ -339,13 +393,14 @@ export default function LandingPage() {
               <ul className="space-y-4 mb-12 text-left">
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Zap className="w-4 h-4 text-ds-blue/30" /> Real-time Terminal</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Star className="w-4 h-4 text-ds-blue/30" /> Top Boutique Scans</li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Target className="w-4 h-4 text-ds-blue/30" /> 3 Watchlist Slots</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Target className="w-4 h-4 text-ds-blue/30" /> 10 Watchlist Slots</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-white/40 italic"><Zap className="w-4 h-4 text-ds-indigo/30" /> Optional AI Top-Ups</li>
               </ul>
               <div className="mt-auto space-y-4">
                  <Link href="/seek" className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-ds-bg transition-all">
                     Start_Hunting
                  </Link>
-                 <p className="text-[9px] text-center font-black uppercase text-ds-text-dim tracking-tighter opacity-40 italic">No Subscription Required</p>
+                 <p className="text-[9px] text-center font-black uppercase text-ds-text-dim tracking-tighter opacity-40 italic">0 Sniper Slots Included</p>
               </div>
             </div>
           </motion.div>
@@ -353,7 +408,7 @@ export default function LandingPage() {
           <motion.div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
             <div className="p-12 rounded-[inherit] bg-ds-surface flex flex-col h-full border border-white/5 backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-[50px] group-hover:bg-white/10 transition-colors" />
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-ds-blue/20 border border-ds-blue/40 text-ds-blue rounded-full font-black uppercase text-[8px] tracking-[0.2em] shadow-2xl z-20 backdrop-blur-md">7-Day Free Trial</div>
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-ds-blue/20 border border-ds-blue/40 text-ds-blue rounded-full font-black uppercase text-[8px] tracking-[0.2em] shadow-2xl z-20 backdrop-blur-md">7-Day Free Trial</div>
               <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-ds-text-dim">Standard_Unit</h4>
               <div className="flex items-baseline gap-2 mb-10">
                 <span className="text-6xl font-black tracking-tight text-white">R150</span>
@@ -361,9 +416,10 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-4 mb-12 text-left">
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Zap className="w-4 h-4 text-ds-blue" /> Real-time Terminal</li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Star className="w-4 h-4 text-ds-blue" /> Top Boutique Scans</li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Target className="w-4 h-4 text-ds-blue" /> 20 Watchlist Slots</li>
-                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Bell className="w-4 h-4 text-ds-blue" /> WhatsApp Alerts</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Star className="w-4 h-4 text-ds-blue" /> Fast-Response Anticipation (60s)</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Target className="w-4 h-4 text-ds-blue" /> 100 Watchlist Slots</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Monitor className="w-4 h-4 text-ds-blue" /> 1 Local Monitoring Node</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Bell className="w-4 h-4 text-ds-blue" /> WhatsApp & Desktop Alerts</li>
               </ul>
               <div className="mt-auto space-y-4">
                  <PayPalSubscription planId="P-4EJ62012V0978711ANHCYN7Q" tier="Standard" />
@@ -483,7 +539,7 @@ export default function LandingPage() {
               <span className="text-ds-blue font-black uppercase tracking-widest text-[10px] mb-4 block">Engine Efficiency</span>
               <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">Data <span className="text-white">Economics.</span></h2>
               <p className="text-gray-400 max-w-2xl font-medium leading-relaxed">
-                 High-frequency sniping requires massive network overhead. We route your requests through encrypted residential pools to survive anti-bot detection. Below is the full breakdown of how your data is consumed during a mission.
+                 High-frequency scraping requires rotating proxies to avoid detection that costs data. We route your requests through encrypted residential pools to survive anti-bot detection. Below is the full breakdown of how your data is consumed during a mission.
               </p>
            </div>
 
@@ -495,16 +551,16 @@ export default function LandingPage() {
                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white">Frequency</th>
                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white">Consumption</th>
                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white">Run_Cost_Hr</th>
-                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white">Pro_Run_Time</th>
+                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white">Max_Run_Time</th>
                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-white text-right">Access</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
                     {[
                        { tier: 'Standby_Scan', freq: '1hr Intervals', usage: '~0.1MB / Hr', cost: 'R0.00', capacity: 'UNLIMITED', access: 'FREE (CLOUD)' },
-                       { tier: 'Anticipation', freq: '60s Intervals', usage: '~4.2MB / Hr', cost: 'R0.63', capacity: '480 HOURS', access: 'INCLUDED' },
-                       { tier: 'Tactical_Sniper', freq: '0.5s Intervals', usage: '~480MB / Hr', cost: 'R72.00', capacity: '4 HOURS', access: '2GB CAP' },
-                       { tier: 'Distributed_Hive', freq: 'Multi-Node', usage: 'High Fidelity', cost: 'VARIABLE', capacity: 'DYNAMIC', access: 'TOP-UP REQ' }
+                       { tier: 'Anticipation', freq: '60s Intervals', usage: '~4.2MB / Hr', cost: 'R0.00', capacity: 'UNLIMITED', access: 'LOCAL IP_ONLY' },
+                       { tier: 'Tactical_Sniper', freq: '0.5s Intervals', usage: '~480MB / Hr', cost: 'R72.00', capacity: '4 HOURS', access: 'PRO_ONLY' },
+                       { tier: 'Distributed_Hive', freq: 'Multi-Node', usage: 'High Fidelity', cost: 'VARIABLE', capacity: 'DYNAMIC', access: 'PRO_ONLY' }
                     ].map((row, idx) => (
                        <tr key={idx} className="group hover:bg-white/5 transition-colors">
                           <td className="px-8 py-6">
@@ -541,12 +597,16 @@ export default function LandingPage() {
                     Smart Snipers only toggle <span className="text-ds-blue font-bold">Sniper Mode</span> during active drop windows. Use <span className="text-ds-indigo font-bold">Anticipation Mode</span> for 24/7 restock tracking to maximize your proxy ROI.
                  </p>
               </div>
-              <div className="shrink-0 pt-6 md:pt-0">
-                 <div className="px-6 py-4 rounded-2xl bg-ds-bg border border-white/10 text-center">
-                    <span className="text-[9px] font-black uppercase text-gray-500 block mb-1">Top-Up Rate</span>
-                    <span className="text-2xl font-black text-white">R150 <span className="text-xs text-ds-blue">/ GB</span></span>
-                 </div>
-              </div>
+              <div className="shrink-0 pt-6 md:pt-0 flex flex-col sm:flex-row gap-6">
+                  <div className="px-6 py-4 rounded-2xl bg-ds-bg border border-white/10 text-center min-w-[140px]">
+                     <span className="text-[9px] font-black uppercase text-gray-500 block mb-1">Data Rate</span>
+                     <span className="text-2xl font-black text-white">R150 <span className="text-xs text-ds-blue">/ GB</span></span>
+                  </div>
+                  <div className="px-6 py-4 rounded-2xl bg-ds-bg border border-ds-indigo/30 text-center min-w-[140px] shadow-[0_0_20px_rgba(129,140,248,0.1)]">
+                     <span className="text-[9px] font-black uppercase text-ds-indigo block mb-1">AI Credits</span>
+                     <span className="text-2xl font-black text-white">R100 <span className="text-xs text-ds-indigo">/ 100</span></span>
+                  </div>
+               </div>
            </div>
         </div>
       </section>

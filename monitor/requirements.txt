@@ -8,3 +8,6 @@ customtkinter
 undetected-chromedriver
 pyinstaller
 google-generativeai
+pystray
+Pillow
+beautifulsoup4

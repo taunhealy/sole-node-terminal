@@ -1,0 +1,287 @@
+print(">>> SOLE_NODE MONITOR ENGINE: BOOTING...")
+import os
+import sys
+import threading
+import time
+import json
+import re
+import winsound
+import socket
+import hashlib
+import customtkinter as ctk
+print(">>> UI LIBRARIES: READY.")
+
+# --- DEFERRED HEAVY MODULES ---
+requests = None
+firestore = None
+uc = None
+BeautifulSoup = None
+
+def lazy_load_core():
+    global requests, firestore, uc, BeautifulSoup
+    if requests is not None: return # Already loaded
+    print(">>> SYSTEM PROTOCOLS: CONFIGURING...")
+    from curl_cffi import requests as _req
+    from google.cloud import firestore as _fs
+    import undetected_chromedriver as _uc
+    from bs4 import BeautifulSoup as _bs
+    requests, firestore, uc, BeautifulSoup = _req, _fs, _uc, _bs
+    print(">>> CORE MODULES: LOADED.")
+
+# Setup Theme
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
+
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+# Set credentials env
+CRED_PATH = get_resource_path("service-account-key.json")
+if os.path.exists(CRED_PATH):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CRED_PATH
+
+class SoleNodeApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("SoleSeek.io | v1.8 Fleet Commander")
+        self.geometry("1000x940")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+        # State
+        self.monitoring = False
+        self.monitor_thread = None
+        self.profile_file = get_resource_path("profile.json")
+        self.profile_data = self.load_profile()
+        self.db = None
+        self.db_status = "OFFLINE"
+        
+        # Session Context
+        self.session_cookies = {}
+        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        self.user_tier = "Free"
+        self.is_logged_in = False
+        self.proxies = []
+        self.proxy_index = 0
+        self.keyword_tasks = []
+        self.atc_lock = threading.Lock()
+        self.recent_atc_triggers = {} 
+        self.last_atc_sku = None
+        self.triggered_alerts = set()
+        self.user_watchlist = []
+        
+        # UI Layout Root
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        # Header
+        self.header_label = ctk.CTkLabel(self, text="SOLESEEK.io", font=("Inter", 42, "bold"), text_color="#3a86ff")
+        self.header_label.grid(row=0, column=0, pady=(20, 5), sticky="n")
+
+        # Global Status Bar
+        self.status_bar = ctk.CTkFrame(self, fg_color="#1a1c22", height=40, corner_radius=0)
+        self.status_bar.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.status_bar.grid_propagate(False)
+        
+        self.status_dot = ctk.CTkLabel(self.status_bar, text="🟡", font=("Inter", 10))
+        self.status_dot.pack(side="left", padx=(20, 0))
+        
+        self.status_label = ctk.CTkLabel(self.status_bar, text="BOOTING SYSTEM PROTOCOLS...", font=("Inter", 11, "bold"), text_color="gray")
+        self.status_label.pack(side="left", padx=5)
+
+        self.mode_info = ctk.CTkLabel(self.status_bar, text="MODE: ANTICIPATION", font=("Inter", 10, "bold"), text_color="#3a86ff")
+        self.mode_info.pack(side="right", padx=20)
+
+        # Main UI Implementation
+        self._setup_ui()
+
+        # Async Boot to prevent HANG
+        self.after(500, lambda: threading.Thread(target=self.boot_sequence, daemon=True).start())
+
+    def _setup_ui(self):
+        # --- TAB VIEW LAYOUT ---
+        self.tabview = ctk.CTkTabview(self, width=920, height=520, 
+                                      anchor="nw", 
+                                      segmented_button_fg_color="#1a1c22",
+                                      segmented_button_selected_color="#3a86ff",
+                                      segmented_button_selected_hover_color="#2a76ef",
+                                      text_color="#ffffff")
+        self.tabview.grid(row=2, column=0, padx=40, pady=(10, 10), sticky="nsew")
+        
+        self.tab_scraper = self.tabview.add("SCRAPER")
+        self.tab_tasks = self.tabview.add("SNIPER SLOTS")
+        self.tab_automation = self.tabview.add("AUTOMATION HUB")
+        self.tab_gemini = self.tabview.add("AI COMMAND CENTER")
+        self.tab_profiles = self.tabview.add("PROFILES")
+        self.tab_settings = self.tabview.add("SETTINGS")
+
+        # --- TAB: SCRAPER (Main Terminal View) ---
+        self.fleet_group = ctk.CTkFrame(self.tab_scraper, fg_color="#1a1c22", corner_radius=15)
+        self.fleet_group.pack(padx=20, pady=10, fill="x")
+        
+        self.mode_var = ctk.StringVar(value="Anticipation")
+        self.mode_selector = ctk.CTkSegmentedButton(self.fleet_group, 
+                                                    values=["Idle", "Anticipation", "Sniper"], 
+                                                    variable=self.mode_var,
+                                                    command=self.on_mode_change,
+                                                    width=400, height=35,
+                                                    font=("Inter", 11, "bold"))
+        self.mode_selector.pack(pady=15)
+
+        self.scale_var = ctk.IntVar(value=1)
+        self.scale_slider = ctk.CTkSlider(self.fleet_group, from_=1, to=3, number_of_steps=2, width=400, variable=self.scale_var, command=self.update_scale_label)
+        self.scale_slider.pack(pady=5)
+        
+        self.scale_status_label = ctk.CTkLabel(self.fleet_group, text=f"ACTIVE_NODES: {self.scale_var.get()}", font=("Consolas", 16, "bold"), text_color="#3a86ff")
+        self.scale_status_label.pack(pady=5)
+
+        self.log_box = ctk.CTkTextbox(self.tab_scraper, font=("Consolas", 12), border_width=1, border_color="#2d2d33")
+        self.log_box.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # --- TAB: SNIPER TASKS ---
+        self.tasks_frame = ctk.CTkScrollableFrame(self.tab_tasks, fg_color="transparent")
+        self.tasks_frame.pack(padx=20, pady=10, fill="both", expand=True)
+        
+        self.task_input_frame = ctk.CTkFrame(self.tab_tasks, fg_color="#1a1c22", corner_radius=10)
+        self.task_input_frame.pack(padx=20, pady=10, fill="x")
+        
+        self.task_name_entry = ctk.CTkEntry(self.task_input_frame, placeholder_text="SKU Name", width=150)
+        self.task_name_entry.pack(side="left", padx=5, pady=10)
+        self.task_kw_entry = ctk.CTkEntry(self.task_input_frame, placeholder_text="Keywords", width=250)
+        self.task_kw_entry.pack(side="left", padx=5)
+        self.add_task_btn = ctk.CTkButton(self.task_input_frame, text="+ ADD TASK", command=self.add_keyword_task, width=150, fg_color="#3a86ff")
+        self.add_task_btn.pack(side="right", padx=10)
+
+        # --- TAB: AUTOMATION HUB ---
+        self.automation_group = ctk.CTkFrame(self.tab_automation, fg_color="#1a1c22", corner_radius=15)
+        self.automation_group.pack(padx=20, pady=10, fill="x")
+        
+        self.atc_var = ctk.BooleanVar(value=True)
+        ctk.CTkSwitch(self.automation_group, text="AUTO ADD TO CART", variable=self.atc_var, font=("Inter", 12, "bold")).pack(pady=10)
+        self.load_images_var = ctk.BooleanVar(value=True)
+        ctk.CTkSwitch(self.automation_group, text="LOAD IMAGES (FASTER IF OFF)", variable=self.load_images_var, font=("Inter", 12, "bold")).pack(pady=10)
+        
+        self.test_store_btn = ctk.CTkButton(self.tab_automation, text="RUN SNIPE TEST (SHELFLIFE)", command=self.manual_test_atc, width=200, height=45, fg_color="#3a86ff")
+        self.test_store_btn.pack(pady=20)
+
+        # --- TAB: AI COMMAND CENTER ---
+        self.gemini_frame = ctk.CTkFrame(self.tab_gemini, fg_color="transparent")
+        self.gemini_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self.ai_log_box = ctk.CTkTextbox(self.gemini_frame, font=("Inter", 12))
+        self.ai_log_box.pack(fill="both", expand=True, pady=(0, 10))
+        self.ai_log_box.insert("0.0", "🤖 [GEMINI AI] v1.8 ONLINE...")
+        self.ai_log_box.configure(state="disabled")
+        
+        self.ai_entry = ctk.CTkEntry(self.gemini_frame, placeholder_text="Ask Gemini Sniper Intelligence...")
+        self.ai_entry.pack(fill="x", side="left", expand=True, padx=(0, 10))
+        self.ai_entry.bind("<Return>", lambda e: self.send_to_gemini())
+        ctk.CTkButton(self.gemini_frame, text="QUERY AI", command=self.send_to_gemini, width=100).pack(side="right")
+
+        # --- TAB: PROFILES ---
+        self.prof_frame = ctk.CTkScrollableFrame(self.tab_profiles, fg_color="transparent")
+        self.prof_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        self.entries = {}
+        fields = [("First Name", "first_name"), ("Last Name", "last_name"), ("Email", "email"), ("Phone", "phone"), ("Address 1", "address1")]
+        for label, key in fields:
+            row = ctk.CTkFrame(self.prof_frame, fg_color="transparent")
+            row.pack(fill="x", pady=5)
+            ctk.CTkLabel(row, text=label, width=120, anchor="w").pack(side="left")
+            entry = ctk.CTkEntry(row, width=300)
+            entry.insert(0, self.profile_data.get(key, ""))
+            entry.pack(side="right", expand=True, fill="x")
+            self.entries[key] = entry
+        ctk.CTkButton(self.tab_profiles, text="SAVE PROFILE", command=self.save_profile, fg_color="#28a745").pack(pady=20)
+
+        # --- TAB: SETTINGS ---
+        self.node_settings_frame = ctk.CTkScrollableFrame(self.tab_settings, fg_color="transparent")
+        self.node_settings_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        self.gemini_key_entry = ctk.CTkEntry(self.node_settings_frame, placeholder_text="Gemini API Key", width=400, show="*")
+        self.gemini_key_entry.pack(pady=10)
+        self.gemini_key_entry.insert(0, self.profile_data.get("gemini_api_key", ""))
+        ctk.CTkButton(self.node_settings_frame, text="SAVE AI CREDENTIALS", command=self.save_gemini_config, fg_color="#28a745").pack(pady=5)
+
+        # --- USER CONTEXT / CLOUD ---
+        self.context_frame = ctk.CTkFrame(self, fg_color="#1a1c22", height=60)
+        self.context_frame.grid(row=3, column=0, sticky="ew", padx=40, pady=10)
+        
+        self.email_display = ctk.CTkEntry(self.context_frame, placeholder_text="sync@account.com", width=250)
+        self.email_display.pack(side="left", padx=10, pady=10)
+        self.email_display.insert(0, self.profile_data.get("email", ""))
+        
+        ctk.CTkButton(self.context_frame, text="CLOUD_SYNC", command=self.sync_cloud_profile, width=120).pack(side="left", padx=5)
+        self.db_indicator = ctk.CTkLabel(self.context_frame, text="DB: OFFLINE", font=("Inter", 10, "bold"), text_color="#dc3545")
+        self.db_indicator.pack(side="right", padx=20)
+
+        # --- CONTROLS ---
+        self.control_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.control_frame.grid(row=4, column=0, pady=20)
+        
+        self.start_btn = ctk.CTkButton(self.control_frame, text="START MONITOR", command=self.start_monitor, width=220, height=60, font=("Inter", 16, "bold"), fg_color="#28a745")
+        self.start_btn.grid(row=0, column=0, padx=15)
+        
+        self.stop_btn = ctk.CTkButton(self.control_frame, text="STOP MONITOR", command=self.stop_monitor, width=220, height=60, font=("Inter", 16, "bold"), fg_color="#dc3545", state="disabled")
+        self.stop_btn.grid(row=0, column=1, padx=15)
+
+    def ai_log(self, msg):
+        timestamp = time.strftime("[%H:%M:%S]")
+        if hasattr(self, 'log_box'):
+            try:
+                self.log_box.insert("end", f"{timestamp} {msg}\n")
+                self.log_box.see("end")
+            except: pass
+
+    def log(self, msg): self.ai_log(msg)
+
+    def boot_sequence(self):
+        self.ai_log("🚀 BOOT SEQUENCE: ENGAGED")
+        try:
+            lazy_load_core()
+            self.ai_log("✅ CORE ENGINE COMPONENTS: LOADED")
+            
+            potential_keys = [
+                os.path.join(os.getcwd(), "service-account-key.json"),
+                os.path.join(os.path.dirname(sys.executable), "service-account-key.json"),
+                get_resource_path("service-account-key.json")
+            ]
+            
+            key_path = next((pk for pk in potential_keys if os.path.exists(pk)), None)
+            if key_path:
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
+                self.db = firestore.Client()
+                self.db_status = "SYNCED"
+                self.db_indicator.configure(text="DB: SYNCED", text_color="#28a745")
+                self.ai_log(f"✅ FIREBASE NODE: {os.path.basename(key_path)} CONNECTED")
+            
+            self.init_gemini_engine()
+            self.status_label.configure(text="SYSTEM STATUS: ONLINE", text_color="#00C853")
+            self.status_dot.configure(text="🟢")
+            self.ai_log("🏁 SYSTEM READY: FLEET COMMANDER IS ONLINE.")
+            self.load_tasks()
+        except Exception as e:
+            self.ai_log(f"❌ CRITICAL BOOT ERROR: {e}")
+
+    def init_gemini_engine(self):
+        key = self.profile_data.get("gemini_api_key") or "AIzaSyDimaZuD7ClHDTVDCgpRqF1us3Cqn3H8tY"
+        if key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=key)
+                self.gemini_commander = genai.GenerativeModel(model_name="gemini-flash-latest")
+                self.gemini_log("✅ Gemini Commander Engine: LOADED & READY.")
+            except Exception as e:
+                self.gemini_log(f"⚠️ Gemini Init Error: {e}")
+
+    def gemini_log(self, message):
+        try:
+            self.ai_log_box.configure(state="normal")
+            self.ai_log_box.insert("end", f"{message}\n\n")
+            self.ai_log_box.see("end")
+            self.ai_log_box.configure(state="disabled")
+        except: pass
+
+    # ... Rest of methods (save_profile, load_profile, etc) continue below ...

@@ -3,12 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Zap, LogOut, LogIn, User, CreditCard, Menu, X, Search, Target, Activity, ChevronRight, Shield } from 'lucide-react'
+import { Zap, LogOut, LogIn, User, CreditCard, Menu, X, Search, Target, Activity, ChevronRight, Shield, Monitor } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { useAuth } from '@/lib/AuthContext'
 import { db } from '@/lib/firebase'
-import { doc, updateDoc, serverTimestamp, collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore'
+import { doc, updateDoc, serverTimestamp, collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -16,13 +16,15 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [lastScanDate, setLastScanDate] = useState<Date | null>(null)
   const [relativeTime, setRelativeTime] = useState<string>('Initializing...')
+  const [activeSniperCount, setActiveSniperCount] = useState<number>(0)
   const { user, login, logout, loading, appUser } = useAuth()
 
   useEffect(() => {
     // 1. Terminal Heartbeat
     const heartbeatUnsub = onSnapshot(doc(db, 'stock', '_terminal_status'), (snap) => {
       if (snap.exists() && snap.data()?.last_scan_at) {
-        setLastScanDate(new Date(snap.data().last_scan_at.seconds * 1000))
+        const d = snap.data().last_scan_at
+        setLastScanDate(d.toDate ? d.toDate() : new Date(d.seconds * 1000))
       }
     }, (err) => {
       console.error("Navbar Heartbeat Error:", err)
@@ -34,16 +36,30 @@ export default function Navbar() {
       if (!snap.empty) {
         const d = snap.docs[0].data()
         if (d?.last_updated) {
-          setLastScanDate(prev => !prev ? new Date(d.last_updated.seconds * 1000) : prev)
+          setLastScanDate(prev => !prev ? (d.last_updated.toDate ? d.last_updated.toDate() : new Date(d.last_updated.seconds * 1000)) : prev)
         }
       }
     }, (err) => {
       console.error("Navbar Fallback Error:", err)
     })
 
+    // 3. Active Sniper Sync (with Ghost Filter)
+    const nodeQ = query(collection(db, 'active_nodes'), where('status', '==', 'active'))
+    const nodeUnsub = onSnapshot(nodeQ, (snap) => {
+      const fifteenMinsAgo = Date.now() - (15 * 60 * 1000)
+      let count = 0
+      snap.forEach(doc => {
+        const d = doc.data()
+        const lastSeen = d.last_seen?.toMillis?.() || 0
+        if (lastSeen > fifteenMinsAgo) count++
+      })
+      setActiveSniperCount(count)
+    })
+
     return () => { 
       if (typeof heartbeatUnsub === 'function') heartbeatUnsub(); 
       if (typeof fallbackUnsub === 'function') fallbackUnsub(); 
+      if (typeof nodeUnsub === 'function') nodeUnsub();
     }
   }, [])
 
@@ -60,15 +76,16 @@ export default function Navbar() {
   }, [lastScanDate])
 
   const diffSec = lastScanDate ? Math.floor((Date.now() - lastScanDate.getTime()) / 1000) : 0
-  const systemStatus = !lastScanDate ? 'Live' : diffSec > 900 ? 'Offline' : diffSec > 300 ? 'Delayed' : 'Live'
+  const systemStatus = activeSniperCount > 0 ? 'Live' : (!lastScanDate ? 'Live' : diffSec > 900 ? 'Offline' : diffSec > 300 ? 'Delayed' : 'Live')
   const statusColor = systemStatus === 'Offline' ? 'bg-ds-red' : systemStatus === 'Delayed' ? 'bg-ds-orange' : 'bg-ds-green'
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Snipe', path: '/nodes' },
-    { name: 'AI Intel', path: '/ai-intel' },
+    { name: 'Snipe', path: '/snipe' },
     { name: 'Seek', path: '/seek' },
     { name: 'Compare', path: '/compare' },
+    { name: 'AI Intel', path: '/ai-intel' },
+    { name: 'Pricing', path: '/#pricing' },
     { name: 'Blog', path: '/blog' }
   ]
 
@@ -90,6 +107,23 @@ export default function Navbar() {
   }, [])
 
   const [hoveredPath, setHoveredPath] = useState<string | null>(null)
+  const [showNodeModal, setShowNodeModal] = useState(false)
+  const [activeNodes, setActiveNodes] = useState<any[]>([])
+
+  useEffect(() => {
+    const q = query(collection(db, 'active_nodes'), where('status', '==', 'active'))
+    const unsub = onSnapshot(q, (snap) => {
+      const fifteenMinsAgo = Date.now() - (15 * 60 * 1000)
+      const list: any[] = []
+      snap.forEach(doc => {
+        const d = doc.data()
+        const lastSeen = d.last_seen?.toMillis?.() || 0
+        if (lastSeen > fifteenMinsAgo) list.push({ id: doc.id, ...d })
+      })
+      setActiveNodes(list)
+    })
+    return () => unsub()
+  }, [])
 
   return (
     <>
@@ -147,18 +181,95 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-6 relative z-50">
-            {/* System Status */}
-            <div className={`hidden sm:flex items-center gap-3 px-4 py-1.5 bg-white/5 border ${systemStatus === 'Live' ? 'border-white/10' : 'border-ds-red/20'} rounded-full transition-colors`}>
+            {/* 🛰️ Fleet HUD Status */}
+            <div 
+              onClick={() => setShowNodeModal(true)}
+              className={`hidden sm:flex items-center gap-3 px-5 py-2 bg-black/40 border ${systemStatus === 'Live' ? 'border-ds-blue/20 shadow-[0_0_15px_rgba(30,58,138,0.2)]' : 'border-ds-red/20'} rounded-2xl transition-all backdrop-blur-xl group/hud cursor-pointer hover:border-ds-blue/50 active:scale-95`}
+            >
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`} />
-                <span className="text-[10px] font-black text-ds-text-dim uppercase tracking-tighter">System: {systemStatus}</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse shadow-[0_0_8px_currentColor]`} />
+                <span className="text-[9px] font-black text-white/90 uppercase tracking-[0.15em] italic">
+                   Hive_Status: <span className={systemStatus === 'Live' ? 'text-ds-green' : 'text-ds-red'}>{systemStatus}</span>
+                </span>
               </div>
               <div className="w-px h-3 bg-white/10" />
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-tighter">Last Scan:</span>
-                <span className={`text-[10px] font-black ${systemStatus === 'Live' ? 'text-ds-blue' : 'text-ds-red/50'} uppercase tracking-tighter tabular-nums`} title={lastScanDate?.toLocaleString()}>{relativeTime}</span>
+                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Fleet_Active:</span>
+                <span className="text-[10px] font-black text-ds-blue tracking-tighter tabular-nums drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]">
+                  {activeSniperCount} <span className="text-[8px] font-medium text-ds-blue/60 ml-0.5">{activeSniperCount === 1 ? 'SNIPER' : 'SNIPERS'}</span>
+                </span>
               </div>
             </div>
+
+            <AnimatePresence>
+              {showNodeModal && (
+                <div className="fixed inset-0 z-200 flex items-center justify-center px-6">
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }} 
+                    onClick={() => setShowNodeModal(false)} 
+                    className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+                  />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+                    animate={{ scale: 1, opacity: 1, y: 0 }} 
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-ds-surface border border-white/10 p-8 rounded-[40px] w-full max-w-xl relative z-210 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-ds-blue via-ds-indigo to-ds-blue" />
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h2 className="text-2xl font-black uppercase italic tracking-tighter">Fleet_Node_Directory</h2>
+                        <p className="text-[9px] font-black text-ds-text-dim uppercase tracking-[0.3em]">Authorized Hive Surveillance</p>
+                      </div>
+                      <button onClick={() => setShowNodeModal(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5 text-ds-text-dim" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                      {activeNodes.length === 0 ? (
+                        <div className="py-12 text-center">
+                          <Activity className="w-12 h-12 text-gray-800 mx-auto mb-4 animate-pulse" />
+                          <span className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Awaiting active node handshakes...</span>
+                        </div>
+                      ) : (
+                        activeNodes.map((node) => (
+                          <div key={node.id} className="p-5 bg-white/2 border border-white/5 rounded-2xl flex items-center justify-between group hover:border-white/10 transition-all">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-ds-blue/10 border border-ds-blue/20 flex items-center justify-center text-ds-blue">
+                                <Monitor className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-black uppercase tracking-tight text-white mb-0.5">{node.node_name || node.alias || 'Generic_Node'}</h4>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[8px] font-black text-ds-text-dim uppercase tracking-widest leading-none">{node.platform || 'STATION'} // v{node.version || '1.0'}</span>
+                                  <div className="w-1 h-1 rounded-full bg-white/20" />
+                                  <span className="text-[8px] font-black text-ds-blue uppercase tracking-widest leading-none">{node.mode || 'ANTICIPATION'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-[9px] font-black text-ds-green uppercase tracking-widest mb-1">ONLINE</span>
+                              <span className="text-[7px] font-medium text-ds-text-dim uppercase tracking-widest italic">{node.node_id?.slice(-4)}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <div className="w-2 h-2 rounded-full bg-ds-blue animate-ping" />
+                         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-ds-blue">Secure_Hive_Uplink_Established</span>
+                       </div>
+                       <button onClick={() => setShowNodeModal(false)} className="text-[9px] font-black uppercase tracking-widest text-ds-text-dim hover:text-white transition-colors">Close_Terminal</button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence mode="wait">
               {!user ? (
@@ -281,7 +392,7 @@ export default function Navbar() {
                           <button
                             onClick={async () => {
                               if (confirm(`Are you sure you want to cancel your ${appUser.tier.toUpperCase()} subscription?`)) {
-                                const userRef = doc(db, 'users', user.email!)
+                                const userRef = doc(db, 'active_nodes', user.email!)
                                 await updateDoc(userRef, { tier: 'Free', subscription_status: 'inactive', updated_at: serverTimestamp() })
                                 alert('Subscription cancelled. Downgraded to Free.')
                               }

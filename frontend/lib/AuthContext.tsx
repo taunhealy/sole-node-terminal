@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { auth, db } from './firebase'
 import { onAuthStateChanged, User, signInWithPopup, signOut } from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { googleProvider } from './firebase'
 
 interface AppUser {
@@ -12,6 +12,9 @@ interface AppUser {
   displayName: string | null
   tier: 'Free' | 'Standard' | 'Pro' | 'Elite' | 'Admin'
   status: 'active' | 'paused' | 'inactive' | 'trial'
+  ai_usage: number
+  ai_limit: number
+  ai_credits?: number
 }
 
 interface AuthContextType {
@@ -44,20 +47,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribeProfile = onSnapshot(userDocRef, async (snapshot) => {
            if (snapshot.exists()) {
              const data = snapshot.data()
+             const tier = data.tier || 'Free'
+             const aiLimit = tier === 'Pro' ? 1000 : tier === 'Standard' ? 100 : 10
+             const aiUsage = data.ai_usage || 0
+             
+             // --- MONTHLY QUOTA RESET LOGIC ---
+             const now = new Date()
+             const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`
+             const lastReset = data.last_reset || ""
+             
+             if (lastReset !== currentMonthKey) {
+                // Month has changed! Force Reset
+                await updateDoc(userDocRef, {
+                   ai_usage: 0,
+                   last_reset: currentMonthKey
+                })
+                // The snapshot listener will trigger again with updated data
+                return
+             }
+
              setAppUser({
                uid: user.uid,
                email: user.email,
                displayName: user.displayName,
-               tier: data.tier || 'Free',
+               tier: tier,
                status: data.subscription_status || 'inactive',
+               ai_usage: aiUsage,
+               ai_limit: data.ai_limit || aiLimit,
              })
            } else {
              // Create initial profile
+             const now = new Date()
+             const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`
              const initialProfile = {
                email: user.email,
                displayName: user.displayName,
                tier: 'Free',
                subscription_status: 'inactive',
+               ai_usage: 0,
+               ai_limit: 10,
+               last_reset: currentMonthKey,
                created_at: new Date(),
              }
              await setDoc(userDocRef, initialProfile)
@@ -67,6 +96,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                displayName: user.displayName,
                tier: 'Free',
                status: 'inactive',
+               ai_usage: 0,
+               ai_limit: 10,
              })
            }
            setLoading(false)

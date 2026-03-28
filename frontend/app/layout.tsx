@@ -2,6 +2,8 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/lib/AuthContext'
 import Navbar from '@/components/Navbar'
+import GlobalTicker from '@/components/GlobalTicker'
+import SniperBot from '@/components/SniperBot'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -26,11 +28,15 @@ export default function RootLayout({
           <Navbar />
           <main className="pt-20 min-h-screen">
             {children}
+            <GlobalTicker />
+            <SniperBot />
           </main>
-          <Script 
-            src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription`}
-            strategy="beforeInteractive"
-          />
+          {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
+            <Script 
+              src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription`}
+              strategy="afterInteractive"
+            />
+          )}
         </AuthProvider>
       </body>
     </html>

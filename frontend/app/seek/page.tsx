@@ -381,13 +381,6 @@ export default function TerminalBoard() {
               className={`flex-1 py-1.5 rounded-lg font-black text-[10px] tracking-tighter transition-all ${categoryFilter === 'Kids' ? 'bg-white/10 text-white border border-white/20 shadow-lg' : 'text-ds-text-dim hover:bg-ds-border'}`}
             >KIDS</button>
           </div>
-
-          <div className="p-1.5 bg-ds-bg rounded-xl border border-ds-border flex gap-1 shadow-inner">
-            <button 
-              onClick={() => setTypeFilter(typeFilter === 'Sneaker' ? null : 'Sneaker')}
-              className={`w-full py-1.5 rounded-lg font-black text-[10px] tracking-tighter transition-all ${typeFilter === 'Sneaker' ? 'bg-white/10 text-white border border-white/20 shadow-lg' : 'text-ds-text-dim hover:bg-ds-border'}`}
-            >SNEAKERS</button>
-          </div>
         </div>
 
         <nav className="flex-1 px-2 space-y-1">
@@ -993,9 +986,9 @@ function WatchButton({ item, isWatched, currentCount, tier, email }: { item: Sto
     if (!email) { alert('Please sign in to use the Watch List.'); return }
     
     // Tier-based limits
-    const limitCount = tier === 'Pro' ? 1000 : 3
+    const limitCount = tier === 'Pro' ? 1000 : (tier === 'Standard' ? 100 : 10)
     if (currentCount >= limitCount) {
-      alert(`LIMIT_REACHED: Your current tier (${tier || 'Free'}) is capped at ${limitCount} active alerts. Upgrade to PRO to unlock 1000 slots.`)
+      alert(`LIMIT_REACHED: Your current tier (${tier || 'Free'}) is capped at ${limitCount} active alerts. Upgrade to a higher tier at SoleSeek.io to unlock more slots.`)
       return
     }
 
