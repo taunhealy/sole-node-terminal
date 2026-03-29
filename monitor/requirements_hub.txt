@@ -1,6 +1,9 @@
 fastapi
 uvicorn
-curl_cffi
+requests
 google-cloud-firestore
 python-dotenv
+google-generativeai
+pynacl
 pydantic
+beautifulsoup4

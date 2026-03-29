@@ -1,0 +1,49 @@
+﻿{
+  "status": "success",
+  "result": [
+    {
+      "projectId": "muchlove-e4c9d",
+      "projectNumber": "97081002316",
+      "displayName": "MuchLove",
+      "name": "projects/muchlove-e4c9d",
+      "resources": {
+        "hostingSite": "muchlove-e4c9d"
+      },
+      "state": "ACTIVE",
+      "etag": "1_f906623d-6241-43a5-8c69-587c8d44b558"
+    },
+    {
+      "projectId": "mymoney-106b5",
+      "projectNumber": "941194456261",
+      "displayName": "myMoney",
+      "name": "projects/mymoney-106b5",
+      "resources": {
+        "hostingSite": "mymoney-106b5"
+      },
+      "state": "ACTIVE",
+      "etag": "1_e4e081e8-e2d2-4ee6-9ef9-14139140a182"
+    },
+    {
+      "projectId": "sneaker-stock-alert",
+      "projectNumber": "256432107914",
+      "displayName": "Sneaker Stock Alert",
+      "name": "projects/sneaker-stock-alert",
+      "resources": {
+        "hostingSite": "sneaker-stock-alert"
+      },
+      "state": "ACTIVE",
+      "etag": "1_6e01842a-95d9-4e2d-9548-3c850b801a72"
+    },
+    {
+      "projectId": "white-polaroids",
+      "projectNumber": "732979160953",
+      "displayName": "White Polaroids",
+      "name": "projects/white-polaroids",
+      "resources": {
+        "hostingSite": "white-polaroids"
+      },
+      "state": "ACTIVE",
+      "etag": "1_0c8165d1-0d8b-4cca-a5a2-8c2a3e759fd4"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+﻿{
+  "status": "success",
+  "result": {
+    "sites": [
+      {
+        "name": "projects/sneaker-stock-alert/sites/sneaker-stock-alert",
+        "defaultUrl": "https://sneaker-stock-alert.web.app",
+        "type": "DEFAULT_SITE"
+      },
+      {
+        "name": "projects/sneaker-stock-alert/sites/soleseek-production",
+        "defaultUrl": "https://soleseek-production.web.app",
+        "type": "USER_SITE"
+      },
+      {
+        "name": "projects/sneaker-stock-alert/sites/solesell",
+        "defaultUrl": "https://solesell.web.app",
+        "type": "USER_SITE"
+      }
+    ]
+  }
+}

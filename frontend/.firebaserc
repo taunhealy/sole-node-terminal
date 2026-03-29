@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "sneaker-stock-alert"
-  }
+  },
+  "targets": {
+    "sneaker-stock-alert": {
+      "hosting": {
+        "soleseek": [
+          "soleseek"
+        ],
+        "sneaker-stock-alert": [
+          "sneaker-stock-alert"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

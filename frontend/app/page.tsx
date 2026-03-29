@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Target, Activity, Shield, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search, DollarSign, MapPin } from 'lucide-react'
+import { Zap, Target, Activity, Shield, ChevronRight, ArrowRight, Star, ExternalLink, Globe, TrendingUp, Bell, Database, Monitor, Search, DollarSign, MapPin, Sparkles, MessageSquare, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { db } from '@/lib/firebase'
@@ -50,12 +50,15 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Link href="/seek" className="group relative h-16 px-12 bg-ds-bg border border-white/20 text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all hover:bg-gray-900 hover:text-white active:scale-95 overflow-hidden">
-              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
+            <Link href="/seek" className="group relative h-16 px-12 bg-white text-ds-bg rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all hover:bg-ds-blue hover:text-white active:scale-95 overflow-hidden shadow-2xl shadow-white/10">
               Enter The Terminal
               <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
             </Link>
             
+            <Link href="/resell" className="group relative h-16 px-12 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all hover:bg-white hover:text-ds-bg active:scale-95 overflow-hidden">
+               <ShoppingBag className="w-4 h-4 mr-3 group-hover:rotate-12 transition-transform" />
+               SoleResell Hub
+            </Link>
           </div>
         </motion.div>
 
@@ -385,7 +388,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
           <motion.div className="p-1 rounded-3xl bg-linear-to-b from-white/5 to-transparent">
             <div className="p-12 rounded-[inherit] bg-ds-surface/50 flex flex-col h-full border border-white/5 backdrop-blur-3xl relative overflow-hidden group">
-              <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-ds-text-dim opacity-50">Free_Seeker</h4>
+              <div className="mb-6 flex items-center justify-between">
+                 <h4 className="text-xl font-black uppercase tracking-widest text-ds-text-dim opacity-50">Free_Seeker</h4>
+                 <div className="px-3 py-1 rounded bg-slate-500/10 border border-slate-500/30 text-[8px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                    <Shield className="w-2 h-2" />
+                    RANK: CADET
+                 </div>
+              </div>
               <div className="flex items-baseline gap-2 mb-10">
                 <span className="text-6xl font-black tracking-tight text-white">$0</span>
                 <span className="text-gray-500 text-sm font-black uppercase tracking-[0.3em]">/ Free</span>
@@ -394,6 +403,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Zap className="w-4 h-4 text-ds-blue/30" /> Real-time Terminal</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Star className="w-4 h-4 text-ds-blue/30" /> Top Boutique Scans</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-500"><Target className="w-4 h-4 text-ds-blue/30" /> 10 Watchlist Slots</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-blue/60 italic"><Sparkles className="w-4 h-4 text-ds-blue" /> 10 Free AI Prompts</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-white/40 italic"><Zap className="w-4 h-4 text-ds-indigo/30" /> Optional AI Top-Ups</li>
               </ul>
               <div className="mt-auto space-y-4">
@@ -408,8 +418,13 @@ export default function LandingPage() {
           <motion.div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
             <div className="p-12 rounded-[inherit] bg-ds-surface flex flex-col h-full border border-white/5 backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-[50px] group-hover:bg-white/10 transition-colors" />
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-ds-blue/20 border border-ds-blue/40 text-ds-blue rounded-full font-black uppercase text-[8px] tracking-[0.2em] shadow-2xl z-20 backdrop-blur-md">7-Day Free Trial</div>
-              <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-ds-text-dim">Standard_Unit</h4>
+              <div className="mb-6 flex items-center justify-between">
+                <h4 className="text-xl font-black uppercase tracking-widest text-ds-text-dim">Standard_Unit</h4>
+                <div className="px-3 py-1 rounded bg-ds-blue/10 border border-ds-blue/40 text-[8px] font-black uppercase text-ds-blue tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-pulse">
+                   <Target className="w-2 h-2" />
+                   RANK: MARKSMAN
+                </div>
+              </div>
               <div className="flex items-baseline gap-2 mb-10">
                 <span className="text-6xl font-black tracking-tight text-white">R150</span>
                 <span className="text-gray-500 text-sm font-black uppercase tracking-[0.3em]">/ Month</span>
@@ -419,7 +434,15 @@ export default function LandingPage() {
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Star className="w-4 h-4 text-ds-blue" /> Fast-Response Anticipation (60s)</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Target className="w-4 h-4 text-ds-blue" /> 100 Watchlist Slots</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Monitor className="w-4 h-4 text-ds-blue" /> 1 Local Monitoring Node</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-blue font-bold group-hover:text-white transition-colors"><Sparkles className="w-4 h-4" /> 100 Monthly AI Prompts</li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400 group-hover:text-white transition-colors"><Bell className="w-4 h-4 text-ds-blue" /> WhatsApp & Desktop Alerts</li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-green font-bold group-hover:text-white transition-colors">
+                  <MessageSquare className="w-4 h-4" /> Exclusive Discord Threads
+                </li>
+                <li className="flex items-center gap-9 text-[8px] font-black uppercase tracking-widest text-ds-text-dim/60 group-hover:text-ds-green transition-colors">
+                  #New-Releases | #Whats-Hot
+                </li>
+                <li className="flex items-center gap-4 text-[9px] font-black uppercase tracking-tight text-ds-indigo/60 italic">R100 per 100 Extra Credits</li>
               </ul>
               <div className="mt-auto space-y-4">
                  <PayPalSubscription planId="P-4EJ62012V0978711ANHCYN7Q" tier="Standard" />
@@ -432,7 +455,13 @@ export default function LandingPage() {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gray-700 text-white rounded-md font-black uppercase text-[10px] tracking-widest shadow-2xl z-20">COMING SOON</div>
             <div className="p-12 rounded-[inherit] bg-[#1a1c22] flex flex-col h-full border border-white/5 backdrop-blur-3xl shadow-none group relative overflow-hidden">
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/5 blur-[100px] pointer-events-none" />
-              <h4 className="text-xl font-black uppercase mb-2 tracking-widest text-gray-500">Pro_Seeker</h4>
+              <div className="mb-6 flex items-center justify-between">
+                <h4 className="text-xl font-black uppercase tracking-widest text-gray-500">Pro_Seeker</h4>
+                <div className="px-3 py-1 rounded bg-red-500/10 border border-red-500/30 text-[8px] font-black uppercase text-red-500 tracking-widest flex items-center gap-2">
+                   <Zap className="w-2 h-2" />
+                   RANK: OVERWATCH
+                </div>
+              </div>
               <div className="flex items-baseline gap-2 mb-10">
                 <span className="text-6xl font-black tracking-tight text-gray-400">R450</span>
                 <span className="text-gray-500 text-sm font-black uppercase tracking-[0.3em]">/ Month</span>
@@ -470,9 +499,19 @@ export default function LandingPage() {
                   <Bell className="w-4 h-4 text-gray-500" /> 
                   Full Alert Suite (WhatsApp/Discord)
                 </li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-green font-bold">
+                  <MessageSquare className="w-4 h-4 shadow-[0_0_10px_rgba(34,197,94,0.3)]" /> UNLOCKED: Premium Threads
+                </li>
+                <li className="flex items-center gap-9 text-[8px] font-black uppercase tracking-widest text-ds-green/60">
+                  Full Community Category Access
+                </li>
                 <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-gray-400">
                   <Database className="w-4 h-4 text-gray-500" /> 
                   1000 Watchlist Slots
+                </li>
+                <li className="flex items-center gap-4 text-xs font-black uppercase tracking-tight text-ds-blue font-bold">
+                  <Sparkles className="w-4 h-4 shadow-[0_0_10px_#3a86ff]" /> 
+                  UNLIMITED AI INTELLIGENCE
                 </li>
               </ul>
               <div className="mt-auto space-y-4">
@@ -486,7 +525,81 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🛠️ Detailed Features Section */}
+      {/* 🔮 Discord Community: The Inner Circle */}
+      <section className="py-40 px-12 border-t border-white/5 bg-linear-to-b from-ds-bg to-ds-indigo/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] bg-ds-indigo/10 blur-[150px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ds-indigo/20 border border-ds-indigo/30 text-[10px] font-black uppercase text-ds-indigo tracking-widest mb-6">
+              <Sparkles className="w-3.5 h-3.5" />
+              Community_Moat
+            </span>
+            <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-8">
+              Join the <br /><span className="text-ds-indigo">Inner Circle.</span>
+            </h2>
+            <p className="text-ds-text-dim text-xl max-w-2xl mx-auto font-medium leading-relaxed italic">
+              Access the exclusive Discord hub where real-time boutique scrapers meet human intelligence.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-20 text-left">
+             {[
+               { 
+                 title: '#Resellers', 
+                 desc: 'Direct buy/sell signals and secondary market price analysis streamed instantly to your terminal.',
+                 icon: <TrendingUp className="w-5 h-5" />
+               },
+               { 
+                 title: '#AI-Daily-Briefings', 
+                 desc: 'Tactical daily broadcasts summarizing SA & Global sneaker shifts, inventory drains, and community sentiment.',
+                 icon: <Sparkles className="w-5 h-5 text-ds-green" />
+               },
+               { 
+                 title: '#MarketIntel', 
+                 desc: 'Regional inventory shifts across Shelflife, Archive, and Lemkus—repacked into actionable intelligence.',
+                 icon: <Search className="w-5 h-5" />
+               }
+             ].map((group) => (
+               <div key={group.title} className="p-8 rounded-3xl bg-ds-surface/50 border border-white/5 hover:border-ds-indigo/30 transition-all group backdrop-blur-3xl shadow-2xl">
+                  <div className="p-3 rounded-xl bg-ds-indigo/10 text-ds-indigo w-fit mb-6 group-hover:scale-110 transition-transform">
+                     {group.icon}
+                  </div>
+                  <h3 className="text-xl font-black uppercase tracking-widest text-white mb-3">{group.title}</h3>
+                  <p className="text-sm text-ds-text-dim leading-relaxed font-medium opacity-80">{group.desc}</p>
+               </div>
+             ))}
+          </div>
+
+          <a 
+            href="https://discord.gg/soleseek" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group relative px-12 py-6 bg-white text-ds-bg rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-4 hover:bg-ds-indigo hover:text-white transition-all overflow-hidden shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+          >
+             <div className="absolute inset-0 bg-linear-to-r from-ds-indigo to-ds-blue opacity-0 group-hover:opacity-100 transition-opacity" />
+             <span className="relative z-10 flex items-center gap-3">
+               Enter The SoleSeekers HQ <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+             </span>
+          </a>
+          
+          <div className="mt-12 flex items-center gap-8 opacity-40">
+             <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-ds-green animate-pulse" />
+             </div>
+             <div className="w-px h-4 bg-white/10" />
+             <div className="text-[9px] font-black uppercase tracking-widest">Verified via Discord Auth</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 📊 Data Economics: Transparency Table */}
       <section id="stores" className="py-32 px-12 border-t border-white/5 bg-white/1">
         <div className="max-w-7xl mx-auto flex flex-col gap-24">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
@@ -495,7 +608,7 @@ export default function LandingPage() {
                    <Monitor className="w-5 h-5 text-ds-blue" />
                    <span className="text-[10px] font-black uppercase tracking-widest text-ds-text-dim">Global Live Terminal</span>
                 </div>
-                <h2 className="text-4xl font-black uppercase tracking-tight mb-6 underline decoration-ds-blue/30 underline-offset-8 leading-tight">Unified <br /> Multi-Store Monitoring</h2>
+                <h2 className="text-4xl font-black uppercase tracking-tight mb-6 underline decoration-ds-blue/30 underline-offset-8 leading-tight"><br /> Multi-Store Monitoring</h2>
                 <p className="text-gray-400 text-lg leading-relaxed font-medium">
                    Stop tab-switching. SoleSeek aggregates live inventory from Shelflife, Jack Lemkus, Archive, and others into a single, high-frequency stream. Map colors, sizes, and price drops across the entire market in one unified interface.
                 </p>

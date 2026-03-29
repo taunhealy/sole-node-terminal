@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronRight, ExternalLink } from 'lucide-react'
+import { ChevronRight, ExternalLink, LayoutDashboard } from 'lucide-react'
 import Footer from '@/components/Footer'
 import { db } from '@/lib/firebase'
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore'
@@ -104,6 +104,53 @@ export default function BlogPage() {
              >{store}</button>
            ))}
         </div>
+
+        {/* 🔗 Discord Community Moat */}
+        <motion.a 
+          href="https://discord.gg/soleseek" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16 block p-8 rounded-[2rem] bg-ds-indigo/5 border border-ds-indigo/20 hover:bg-ds-indigo/10 hover:border-ds-indigo/40 transition-all group/discord relative overflow-hidden"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="flex items-center gap-6">
+              <div className="p-4 rounded-2xl bg-ds-indigo/20 text-ds-indigo group-hover/discord:scale-110 group-hover/discord:rotate-6 transition-all duration-500 shadow-2xl">
+                <LayoutDashboard className="w-8 h-8" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Join the Hive Intelligence.</h2>
+                <div className="flex flex-wrap gap-4">
+                  {['#Resellers', '#NewStockAlerts', '#MarketIntel', '#GlobalHits'].map(tag => (
+                    <span key={tag} className="text-[10px] font-black uppercase tracking-[0.2em] text-ds-indigo py-1.5 px-3 bg-ds-indigo/10 rounded-lg border border-ds-indigo/10">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 bg-ds-bg/80 backdrop-blur-3xl p-4 rounded-2xl border border-white/5 shadow-2xl">
+               <div className="flex -space-x-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-ds-bg bg-ds-surface overflow-hidden">
+                       <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 100}`} alt="Active User" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+               </div>
+               <div className="text-left pr-4">
+                  <p className="text-[10px] font-black uppercase text-white tracking-widest leading-tight">5,142 Seekers Active</p>
+                  <p className="text-[9px] text-ds-green font-black uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-ds-green shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
+                    Live Connection
+                  </p>
+               </div>
+            </div>
+          </div>
+          
+          <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+             <ExternalLink className="w-48 h-48 -rotate-12 group-hover/discord:rotate-0 transition-transform duration-700" />
+          </div>
+        </motion.a>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

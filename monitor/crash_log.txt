@@ -1,1 +1,12 @@
-SYSTEM CRASH: '_tkinter.tkapp' object has no attribute 'import_cloud_key'
+SYSTEM CRASH: '_tkinter.tkapp' object has no attribute 'profile_data'
+Traceback (most recent call last):
+  File "K:\Kea\sole-node\monitor\solenode_gui.py", line 1941, in <module>
+    app = SoleNodeApp()
+          ^^^^^^^^^^^^^
+  File "K:\Kea\sole-node\monitor\solenode_gui.py", line 64, in __init__
+    self.minimize_to_tray_var = ctk.BooleanVar(value=self.profile_data.get("minimize_to_tray", True))
+                                                     ^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\tkinter\__init__.py", line 2410, in __getattr__
+    return getattr(self.tk, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_tkinter.tkapp' object has no attribute 'profile_data'

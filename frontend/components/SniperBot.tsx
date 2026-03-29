@@ -121,8 +121,14 @@ export default function SniperBot() {
     }
   }
 
+  useEffect(() => {
+    const handleToggle = () => setIsOpen(prev => !prev)
+    window.addEventListener('toggle-sniper-bot', handleToggle)
+    return () => window.removeEventListener('toggle-sniper-bot', handleToggle)
+  }, [])
+
   return (
-    <div className="fixed bottom-24 right-8 z-200">
+    <div className="fixed bottom-10 right-10 z-[200] pointer-events-none">
       <AnimatePresence>
         {isOpen && (
           <motion.div 
@@ -134,7 +140,7 @@ export default function SniperBot() {
                backgroundSize: 'cover',
                backgroundPosition: 'center'
             }}
-            className="absolute bottom-24 right-0 w-[380px] h-[550px] border border-ds-blue/30 rounded-[40px] shadow-2xl overflow-hidden flex flex-col backdrop-blur-3xl"
+            className="absolute bottom-0 right-0 w-[380px] h-[580px] border border-ds-blue/30 rounded-[40px] shadow-2xl overflow-hidden flex flex-col backdrop-blur-3xl pointer-events-auto"
           >
             {/* Header */}
             <div className="p-6 bg-ds-blue/10 border-b border-white/5 flex items-center justify-between">
@@ -239,41 +245,6 @@ export default function SniperBot() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Floating Trigger Character */}
-      <motion.button
-         whileHover={{ scale: 1.1, rotate: 5 }}
-         whileTap={{ scale: 0.9 }}
-         onClick={() => setIsOpen(!isOpen)}
-         className="relative group"
-      >
-        {/* Glow Aura */}
-        <div className="absolute inset-0 bg-ds-blue/30 blur-2xl rounded-full group-hover:bg-ds-blue/50 transition-all opacity-0 group-hover:opacity-100" />
-        
-        {/* Character Sprite Container */}
-        <div className="w-20 h-20 rounded-full bg-[#1a1c22] border-2 border-ds-blue flex items-center justify-center p-2 relative z-10 overflow-hidden shadow-2xl shadow-ds-blue/40 bg-cover bg-center" style={{ backgroundImage: 'url("/sneaker_cat.png")' }}>
-           {/* Fallback if image fails or is loading */}
-           {!isOpen && (
-             <div className="absolute top-2 right-2 flex gap-1">
-                <div className="w-1.5 h-1.5 bg-ds-blue rounded-full animate-ping" />
-             </div>
-           )}
-        </div>
-
-        {/* Small Tooltip */}
-        <AnimatePresence>
-          {!isOpen && (
-             <motion.div 
-               initial={{ opacity: 0, x: -10 }}
-               animate={{ opacity: 1, x: 0 }}
-               className="absolute right-24 top-1/2 -translate-y-1/2 bg-[#1a1c22]/90 backdrop-blur-md text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase whitespace-nowrap shadow-xl border border-white/10"
-             >
-               Need Intel?
-               <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-[#1a1c22]/90 rotate-45" />
-             </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
     </div>
   )
 }

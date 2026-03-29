@@ -13,6 +13,10 @@ print(">>> UI LIBRARIES: READY.")
 print(">>> SYSTEM TRAY: INITIALIZING...")
 import traceback
 from tkinter import messagebox
+try:
+    import winreg
+except ImportError:
+    winreg = None
 
 # --- DEFERRED HEAVY MODULES ---
 pystray = None
@@ -23,7 +27,7 @@ requests = None
 uc = None
 BeautifulSoup = None
 
-HUB_URL = "http://127.0.0.1:8081" # Explicit IPv4 to avoid localhost resolution issues
+HUB_URL = "https://solenode-api-uo7hii3fca-bq.a.run.app"
 
 def lazy_load_core():
     global requests, uc, BeautifulSoup, pystray, Image, ImageDraw
@@ -57,8 +61,8 @@ class SoleNodeApp(ctk.CTk):
         
         # System Tray Support
         self.tray_icon = None
-        # self.create_tray_icon() # DEFERRED to after() to prevent hang
-        self.bind("<Unmap>", lambda e: self.minimize_to_tray() if self.state() == 'iconic' else None)
+        self.minimize_to_tray_var = ctk.BooleanVar(value=self.profile_data.get("minimize_to_tray", True))
+        self.bind("<Unmap>", lambda e: self.minimize_to_tray() if (self.state() == 'iconic' and self.minimize_to_tray_var.get()) else None)
         
         # State
         self.monitoring = False
@@ -223,6 +227,11 @@ class SoleNodeApp(ctk.CTk):
             
             self.load_proxies()
             self.load_tasks()
+            
+            # AUTO-MONITOR (ANTICIPATION MODE)
+            if self.profile_data.get("auto_monitor"):
+                self.ai_log("🤖 AUTO_START: Engaging Anticipation Mode...")
+                self.after(2000, self.start_monitor)
         except Exception as e:
             self.ai_log(f"❌ CRITICAL BOOT ERROR: {e}")
 
@@ -348,6 +357,22 @@ class SoleNodeApp(ctk.CTk):
         self.gemini_key_entry.pack(pady=10)
         self.gemini_key_entry.insert(0, self.profile_data.get("gemini_api_key", ""))
         ctk.CTkButton(self.node_settings_frame, text="💾 SAVE AI CREDENTIALS", command=self.save_gemini_config, fg_color="#28a745").pack(pady=5)
+        
+        # --- APP BEHAVIOR SETTINGS ---
+        self.behavior_frame = ctk.CTkFrame(self.node_settings_frame, fg_color="#1a1c22", corner_radius=10)
+        self.behavior_frame.pack(fill="x", pady=10, padx=5)
+        ctk.CTkLabel(self.behavior_frame, text="APP BEHAVIOR", font=("Inter", 10, "bold"), text_color="#3a86ff").pack(pady=5)
+        
+        self.startup_var = ctk.BooleanVar(value=self.profile_data.get("windows_startup", False))
+        ctk.CTkCheckBox(self.behavior_frame, text="OPEN AT WINDOWS STARTUP", variable=self.startup_var, command=self.toggle_startup).pack(pady=5, padx=20, anchor="w")
+        
+        self.auto_monitor_var = ctk.BooleanVar(value=self.profile_data.get("auto_monitor", False))
+        ctk.CTkCheckBox(self.behavior_frame, text="AUTO-START MONITOR (ANTICIPATION)", variable=self.auto_monitor_var).pack(pady=5, padx=20, anchor="w")
+        
+        ctk.CTkCheckBox(self.behavior_frame, text="MINIMIZE TO SYSTEM TRAY", variable=self.minimize_to_tray_var).pack(pady=5, padx=20, anchor="w")
+        
+        ctk.CTkButton(self.behavior_frame, text="💾 SAVE BEHAVIOR", command=self.save_behavior_settings, fg_color="#3a86ff").pack(pady=10)
+
         self.proxy_box = ctk.CTkTextbox(self.node_settings_frame, height=120)
         self.proxy_box.pack(fill="x", pady=10)
         ctk.CTkButton(self.node_settings_frame, text="💾 LOCK IN PROXY LIST", command=self.save_proxies).pack(pady=5)
@@ -394,7 +419,12 @@ class SoleNodeApp(ctk.CTk):
                 genai.configure(api_key=key)
                 self.gemini_commander = genai.GenerativeModel(
                     model_name="gemini-flash-latest", # Faster, more robust model
-                    tools=[self.get_stock_intel, self.find_best_resale_deals, self.get_recent_hype_blogs]
+                    tools=[
+                        self.get_stock_intel, 
+                        self.find_best_resale_deals, 
+                        self.get_recent_hype_blogs,
+                        self.add_to_wishlist_tool
+                    ]
                 )
                 self.gemini_log("✅ Gemini Commander Engine: LOADED & READY.")
             except Exception as e:
@@ -408,6 +438,37 @@ class SoleNodeApp(ctk.CTk):
         self.save_profile()
         self.init_gemini_engine()
         self.log("✅ AI Configuration Updated.")
+
+    def save_behavior_settings(self):
+        self.profile_data["auto_monitor"] = self.auto_monitor_var.get()
+        self.profile_data["minimize_to_tray"] = self.minimize_to_tray_var.get()
+        self.profile_data["windows_startup"] = self.startup_var.get()
+        self.save_profile()
+        self.log("✅ Behavior Settings Saved.")
+
+    def toggle_startup(self):
+        enable = self.startup_var.get()
+        if not winreg:
+            self.log("⚠️ Startup Toggle Failed: Platform not supported.")
+            return
+            
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        app_name = "SoleSeekMonitor"
+        app_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(sys.argv[0])
+        
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+            if enable:
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{app_path}"')
+                self.log(f"✅ Registered {app_name} for Windows Startup.")
+            else:
+                try:
+                    winreg.DeleteValue(key, app_name)
+                    self.log(f"✅ Removed {app_name} from Windows Startup.")
+                except FileNotFoundError: pass
+            winreg.CloseKey(key)
+        except Exception as e:
+            self.log(f"❌ Startup Error: {e}")
 
     def gemini_log(self, message):
         """Dedicated log for the AI Command Center Tab"""
@@ -464,6 +525,32 @@ class SoleNodeApp(ctk.CTk):
                 return resp.json()
             return f"Hub Blog Error: {resp.status_code}"
         except Exception as e: return f"Error querying Hub: {e}"
+
+    def add_to_wishlist_tool(self, product_title: str):
+        """Adds a specific product to the user's restock watchlist."""
+        self.gemini_log(f"🤖 AI_COMMAND: Adding '{product_title}' to Watchlist...")
+        try:
+            # Re-use existing local logic
+            self.keyword_tasks.append({
+                "name": product_title, 
+                "keywords": [product_title.lower()],
+                "sizes": []
+            })
+            self.save_tasks()
+            self.refresh_task_ui()
+            
+            # Sync to cloud
+            email = self.email_entry.get().strip()
+            payload = {
+                "name": product_title,
+                "keywords": [product_title.lower()],
+                "sizes": [],
+                "email": email
+            }
+            requests.post(f"{HUB_URL}/api/v1/snipe-task", json=payload)
+            return f"Successfully added {product_title} to watchlist."
+        except Exception as e:
+            return f"Failed to add to wishlist: {e}"
 
     def add_keyword_task(self):
         name = self.task_name_entry.get().strip()

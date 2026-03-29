@@ -17,6 +17,7 @@ interface Hit {
 
 export default function GlobalTicker() {
   const [totalHits, setTotalHits] = useState<number>(0)
+  const [activeNodes, setActiveNodes] = useState<number>(0)
   const [recentHits, setRecentHits] = useState<Hit[]>([])
   const [upcomingHeat, setUpcomingHeat] = useState<any[]>([])
 
@@ -28,7 +29,21 @@ export default function GlobalTicker() {
       }
     })
 
-    // 2. Sync Recent Global Successes
+    // 2. Sync Active Sniper Nodes (Real-time Fleet Count)
+    // Filter out nodes that haven't responded in 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    const nodeQ = query(collection(db, 'active_nodes'))
+    const unsubNodes = onSnapshot(nodeQ, (snap) => {
+      // For accurate live counts, we filter by those updated recently
+      // Note: Client-side filtering is easier here than constructing complex server-side timestamp queries
+      const active = snap.docs.filter(doc => {
+        const lastSeen = doc.data().last_seen?.toDate?.() || new Date(0);
+        return lastSeen > fiveMinutesAgo;
+      }).length;
+      setActiveNodes(active);
+    })
+
+    // 3. Sync Recent Global Successes
     const q = query(collection(db, 'global_hits'), orderBy('timestamp', 'desc'), limit(15))
     const unsubHits = onSnapshot(q, (snap) => {
       const hits: Hit[] = []
@@ -112,9 +127,14 @@ export default function GlobalTicker() {
       <div className="h-full px-6 bg-ds-red/5 border-l border-white/5 flex items-center gap-4 shrink-0">
         <div className="flex flex-col items-end">
           <span className="text-[8px] font-black tracking-widest text-ds-red uppercase leading-none mb-1">Fleet_Node_Status</span>
-          <span className="text-[10px] font-black text-white uppercase leading-none tracking-widest">Active_Combat</span>
+          <span className="text-[10px] font-black text-white uppercase leading-none tracking-widest">
+            {activeNodes} Units_Active
+          </span>
         </div>
-        <Activity className="w-4 h-4 text-ds-red animate-pulse" />
+        <div className="relative">
+          <Activity className="w-4 h-4 text-ds-red animate-pulse" />
+          <div className="absolute inset-0 bg-ds-red/20 blur-sm rounded-full animate-ping" />
+        </div>
       </div>
     </div>
   )

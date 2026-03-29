@@ -201,6 +201,16 @@ export default function Navbar() {
               </div>
             </div>
 
+            {/* 🐱 Intel Cat Navbar Trigger */}
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sniper-bot'))}
+              className="w-10 h-10 rounded-xl bg-ds-surface border border-white/10 flex items-center justify-center p-1.5 hover:border-ds-blue hover:bg-ds-blue/10 transition-all group overflow-hidden shadow-lg relative"
+              title="Intelligence Assistant"
+            >
+               <div className="absolute inset-0 bg-cover bg-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" style={{ backgroundImage: 'url("/sneaker_cat.png")' }} />
+               <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-ds-blue rounded-full animate-ping" />
+            </button>
+
             <AnimatePresence>
               {showNodeModal && (
                 <div className="fixed inset-0 z-200 flex items-center justify-center px-6">

@@ -40,12 +40,16 @@ import {
   X,
   Layers,
   ChevronRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Sparkles,
+  MessageSquare,
+  ShoppingBag
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
 import SizeBadge from '@/components/SizeBadge'
+import CommunityIntel from '@/components/CommunityIntel'
 
 interface StockItem {
   sku_id: string
@@ -390,8 +394,18 @@ export default function TerminalBoard() {
           <NavItem icon={<Zap className={`w-4 h-4 ${activeTab === 'sales' ? 'text-ds-blue' : ''}`} />} label="Sales" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} />
           <NavItem icon={<Star className={`w-4 h-4 ${watchlistSids.length > 0 ? 'fill-current' : ''}`} />} label="Watchlist" count={watchlistSids.length} active={activeTab === 'watchlist'} onClick={() => setActiveTab('watchlist')} />
           <Link 
+            href="/resell" 
+            className="flex items-center gap-3 px-4 py-3 rounded-xl mx-2 text-ds-text-dim hover:bg-ds-indigo/5 hover:text-ds-indigo transition-all group mt-2 border border-transparent hover:border-white/5"
+          >
+            <div className="transition-transform duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <span className="text-[11px] font-black uppercase tracking-widest group-hover:text-white transition-colors block md:hidden lg:block">Resell Hub</span>
+            <div className="ml-auto px-1.5 py-0.5 rounded bg-ds-indigo/10 text-[8px] border border-ds-indigo/20 text-ds-indigo block md:hidden lg:block">NEW</div>
+          </Link>
+          <Link 
             href="/compare" 
-            className="flex items-center gap-3 px-4 py-3 rounded-xl mx-2 text-ds-text-dim hover:bg-ds-blue/5 hover:text-ds-blue transition-all group mt-2 border border-transparent hover:border-white/5"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl mx-2 text-ds-text-dim hover:bg-ds-blue/5 hover:text-ds-blue transition-all group mt-1 border border-transparent hover:border-white/5"
           >
             <div className="transition-transform duration-500 opacity-60 group-hover:opacity-100 group-hover:scale-110">
               <Layers className="w-4 h-4" />
@@ -924,9 +938,11 @@ export default function TerminalBoard() {
                                         href={s.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer" 
-                                        className="inline-flex p-2 bg-white/5 rounded-lg border border-white/10 hover:bg-white hover:text-ds-bg transition-all group/btn"
+                                        className="block w-full h-full"
                                       >
-                                        <ExternalLink className="w-3.5 h-3.5" />
+                                        <div className="inline-flex p-2 bg-white/5 rounded-lg border border-white/10 hover:bg-white hover:text-ds-bg transition-all group/btn">
+                                          <ExternalLink className="w-3.5 h-3.5" />
+                                        </div>
                                       </a>
                                     </td>
                                   </tr>
@@ -1091,6 +1107,7 @@ function InventoryBadge({ soh }: { soh: number | null | undefined }) {
 function IntelligenceSidebar() {
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'intel' | 'discord'>('discord')
 
   useEffect(() => {
     const q = query(collection(db, "store_blogs"), orderBy("detected_at", "desc"), limit(15))
@@ -1113,44 +1130,108 @@ function IntelligenceSidebar() {
           <ExternalLink className="w-2.5 h-2.5 text-ds-indigo opacity-0 group-hover/header:opacity-100 transition-opacity" />
         </a>
         <p className="text-[9px] text-ds-text-dim uppercase font-bold">Real-time boutique scrapers</p>
+        
+        {/* Discord Marketing Banner */}
+        <a 
+          href="https://discord.gg/soleseek" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="mt-6 block p-4 rounded-xl bg-ds-indigo/10 border border-ds-indigo/20 hover:bg-ds-indigo/20 hover:border-ds-indigo/40 transition-all group/discord relative overflow-hidden"
+        >
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="p-2 rounded-lg bg-ds-indigo/20 text-ds-indigo group-hover/discord:scale-110 transition-transform">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-white mb-0.5">SoleSeekers_HQ</div>
+              <div className="text-[9px] text-ds-indigo font-bold uppercase">Join the Inner Circle</div>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 p-2 opacity-10">
+              <MessageSquare className="w-12 h-12 -rotate-12" />
+          </div>
+        </a>
+        <div className="mt-8 flex bg-white/5 p-1 rounded-2xl border border-white/5">
+           <button 
+             onClick={() => setActiveTab('discord')}
+             className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'discord' ? 'bg-ds-green text-ds-bg shadow-2xl' : 'text-ds-text-dim hover:text-white'}`}
+           >
+              <MessageSquare className="w-3 h-3" /> Alerts
+           </button>
+           <button 
+             onClick={() => setActiveTab('intel')}
+             className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'intel' ? 'bg-ds-indigo text-white shadow-2xl' : 'text-ds-text-dim hover:text-white'}`}
+           >
+              <Monitor className="w-3 h-3" /> Intel
+           </button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        {loading ? (
-          [1,2,3].map(i => <div key={i} className="h-32 bg-white/5 rounded-xl animate-pulse" />)
-        ) : reports.length === 0 ? (
-          <div className="text-center py-10 opacity-30 italic text-[10px]">No intelligence gathered yet.</div>
-        ) : (
-          reports.map((report) => (
-            <div key={report.id} className="p-5 rounded-2xl bg-white/3 border border-white/5 hover:border-ds-indigo/30 transition-all group relative overflow-hidden h-[180px] flex flex-col shadow-lg">
-               <div className="absolute top-0 right-0 px-3 py-1 bg-ds-indigo text-ds-bg text-[9px] font-black uppercase tracking-tighter">
-                  {report.store}
-               </div>
-               
-               <h4 className="font-black text-[13px] uppercase tracking-widest mb-3 leading-tight text-white group-hover:text-ds-indigo transition-colors line-clamp-3">
-                  {report.title}
-               </h4>
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          {activeTab === 'intel' ? (
+            <motion.div 
+              key="intel"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="absolute inset-0 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+            >
+              {loading ? (
+                [1,2,3].map(i => <div key={i} className="h-32 bg-white/5 rounded-xl animate-pulse" />)
+              ) : reports.length === 0 ? (
+                <div className="text-center py-10 opacity-30 italic text-[10px]">No intelligence gathered yet.</div>
+              ) : (
+                reports.map((report) => (
+                  <div key={report.id} className="p-0 rounded-2xl bg-white/3 border border-white/5 hover:border-ds-indigo/30 transition-all group relative overflow-hidden h-[180px] flex flex-col shadow-lg">
+                     <a 
+                       href={report.url} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="p-5 h-full flex flex-col"
+                     >
+                        <div className="absolute top-0 right-0 px-3 py-1 bg-ds-indigo text-ds-bg text-[9px] font-black uppercase tracking-tighter">
+                          {report.store}
+                        </div>
+                        
+                        <h4 className="font-black text-[13px] uppercase tracking-widest mb-3 leading-tight text-white group-hover:text-ds-indigo transition-colors line-clamp-3">
+                          {report.title}
+                        </h4>
 
-               <p className="text-[10px] text-ds-text-dim line-clamp-2 mb-4 leading-relaxed italic opacity-80">
-                  {report.excerpt || "Bot intelligence detected a new editorial update concerning regional inventory and releases."}
-               </p>
+                        <p className="text-[10px] text-ds-text-dim line-clamp-2 mb-4 leading-relaxed italic opacity-80">
+                          {report.excerpt || "Bot intelligence detected a new editorial update concerning regional inventory and releases."}
+                        </p>
+                     </a>
 
-               <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                  <span className="text-[9px] font-black text-ds-text-dim uppercase tracking-widest">
-                    {report.detected_at?.seconds ? `${new Date(report.detected_at.seconds * 1000).getDate()} ${new Date(report.detected_at.seconds * 1000).toLocaleDateString([], { month: 'short' })}` : '26 Mar'}
-                  </span>
-                  <a 
-                    href={report.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-[10px] font-black text-ds-indigo uppercase hover:text-white transition-colors flex items-center gap-1.5"
-                  >
-                    Deep Intel <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </a>
-               </div>
-            </div>
-          ))
-        )}
+                     <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5 p-5 bg-ds-bg/20">
+                        <span className="text-[9px] font-black text-ds-text-dim uppercase tracking-widest">
+                          {report.detected_at?.seconds ? `${new Date(report.detected_at.seconds * 1000).getDate()} ${new Date(report.detected_at.seconds * 1000).toLocaleDateString([], { month: 'short' })}` : '26 Mar'}
+                        </span>
+                        <a 
+                          href={report.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1.5 text-[9px] font-black text-ds-indigo uppercase tracking-widest hover:text-white transition-colors"
+                        >
+                          Details <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                     </div>
+                  </div>
+                ))
+              )}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="discord"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="absolute inset-0"
+            >
+               <CommunityIntel />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       
       <div className="p-4 border-t border-white/5 bg-ds-bg/30">

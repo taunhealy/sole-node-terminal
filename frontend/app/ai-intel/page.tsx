@@ -16,7 +16,8 @@ import {
   Bot,
   User,
   RefreshCw,
-  LayoutDashboard
+  LayoutDashboard,
+  Star
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -114,6 +115,37 @@ export default function AIRecommendations() {
     const snap = await getDocs(q)
     return snap.docs.map(doc => doc.data())
   }
+  
+  const addToWishlist = async (title: string) => {
+    if (!user?.email) {
+      login()
+      return
+    }
+    
+    try {
+      const q = query(collection(db, "user_alerts"), where("user_email", "==", user.email), where("product_title", "==", title))
+      const snap = await getDocs(q)
+      if (!snap.empty) {
+        alert("Already in watchlist!")
+        return
+      }
+      
+      await updateDoc(doc(db, "users", user.email), {
+        alerts_count: increment(1)
+      })
+      
+      await updateDoc(doc(db, "user_alerts", `${user.email}_${title}`.replace(/\s+/g, '_')), {
+         user_email: user.email,
+         product_title: title,
+         status: 'active',
+         created_at: new Date()
+      })
+      
+      alert(`Added ${title} to watchlist!`)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return
@@ -171,7 +203,8 @@ export default function AIRecommendations() {
         3. Identify restocks (items recently updated in the hive).
         4. Provide tactical resale advice based on hype-demand, not just price-drops.
         5. YOU MUST INCLUDE THE DIRECT LINK (url) for each product you recommend.
-        6. Format links as [Secure_Item](url) or similar.
+        6. Format links exactly as [Secure_Item](url) for the purchase link.
+        7. After the link, describe the item briefly.
       `
 
       const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
@@ -312,15 +345,24 @@ export default function AIRecommendations() {
                                     <ReactMarkdown 
                                       components={{
                                         a: (props) => (
-                                          <a 
-                                            {...props} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-[#0a1c4b] text-white text-[11px] font-black uppercase rounded-2xl no-underline border border-white/10 hover:bg-[#061234] transition-all shadow-xl"
-                                          >
-                                            <Zap className="w-3.5 h-3.5" />
-                                            Secure_Item
-                                          </a>
+                                          <div className="flex flex-wrap gap-2 mt-4">
+                                            <a 
+                                              {...props} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer" 
+                                              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a1c4b] text-white text-[11px] font-black uppercase rounded-2xl no-underline border border-white/10 hover:bg-[#061234] transition-all shadow-xl"
+                                            >
+                                              <Zap className="w-3.5 h-3.5" />
+                                              Secure_Item
+                                            </a>
+                                            <button 
+                                              onClick={() => addToWishlist("AI Recommended Item")}
+                                              className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-gray-400 text-[11px] font-black uppercase rounded-2xl border border-white/10 hover:bg-white/10 hover:text-white transition-all"
+                                            >
+                                              <Star className="w-3.5 h-3.5 text-ds-blue" />
+                                              Add_To_Wishlist
+                                            </button>
+                                          </div>
                                         )
                                       }}
                                     >
