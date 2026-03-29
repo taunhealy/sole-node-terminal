@@ -29,6 +29,8 @@ BeautifulSoup = None
 
 HUB_URL = "https://solenode-api-uo7hii3fca-bq.a.run.app"
 
+
+
 def lazy_load_core():
     global requests, uc, BeautifulSoup, pystray, Image, ImageDraw
     if requests is not None: return # Already loaded
@@ -59,18 +61,19 @@ class SoleNodeApp(ctk.CTk):
         self.geometry("1000x900")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        # State
+        self.profile_file = get_resource_path("profile.json")
+        self.profile_data = self.load_profile()
+        self.monitoring = False
+        self.monitor_thread = None
+        self.db = None
+        self.db_status = "CONNECTING..."
+        
         # System Tray Support
         self.tray_icon = None
         self.minimize_to_tray_var = ctk.BooleanVar(value=self.profile_data.get("minimize_to_tray", True))
         self.bind("<Unmap>", lambda e: self.minimize_to_tray() if (self.state() == 'iconic' and self.minimize_to_tray_var.get()) else None)
-        
-        # State
-        self.monitoring = False
-        self.monitor_thread = None
-        self.profile_file = get_resource_path("profile.json")
-        self.profile_data = self.load_profile()
-        self.db = None
-        self.db_status = "CONNECTING..."
+
         
         # UI Layout
         self.grid_columnconfigure(0, weight=1)
@@ -175,45 +178,8 @@ class SoleNodeApp(ctk.CTk):
         self.focus_force()
         if self.tray_icon: self.tray_icon.visible = False
 
-    def show_restock_popup(self, item):
-        """Spawns a custom SoleSeek alert window on top of others"""
-        try:
-            popup = ctk.CTkToplevel(self)
-            popup.title("SOLESEEK ENGINE | ACTIVE ALERT")
-            popup.geometry("450x280")
-            popup.attributes("-topmost", True)
-            popup.configure(fg_color="#0d0e12")
-            
-            # Interior Frame
-            inner = ctk.CTkFrame(popup, fg_color="#1a1c22", border_width=1, border_color="#3a86ff")
-            inner.pack(fill="both", expand=True, padx=15, pady=15)
-            
-            # Header
-            ctk.CTkLabel(inner, text="🔥 TARGET DETECTED", font=("Inter", 18, "bold"), text_color="#3a86ff").pack(pady=(15, 5))
-            
-            # Item Details
-            ctk.CTkLabel(inner, text=item.get('title', 'Unknown Product'), font=("Inter", 14, "bold"), wraplength=400).pack(pady=10)
-            
-            detail_str = f"SIZE: {item.get('sz', 'OS')} | PRICE: R{item.get('price', 0):.2f}"
-            ctk.CTkLabel(inner, text=detail_str, font=("Consolas", 12), text_color="#28a745").pack(pady=5)
-            
-            # Store badge
-            store_name = item.get('url', '').split('.')[1].upper() if '.' in item.get('url','') else "STORE"
-            ctk.CTkLabel(inner, text=f"CHANNEL: {store_name}", font=("Inter", 10, "bold"), text_color="gray").pack(pady=5)
-
-            # CTA Button
-            import webbrowser
-            btn = ctk.CTkButton(inner, text="OPEN PRODUCT PAGE", 
-                               command=lambda: [webbrowser.open(item.get('url')), popup.destroy()],
-                               fg_color="#3a86ff", height=45, font=("Inter", 13, "bold"), corner_radius=10)
-            btn.pack(pady=(20, 10), fill="x", padx=40)
-            
-            # Auto-destruct after 20 seconds to prevent clutter
-            popup.after(20000, lambda: popup.destroy() if popup.winfo_exists() else None)
-        except Exception as e:
-            self.log(f"⚠️ Popup Error: {e}")
-
     def boot_sequence(self):
+
         self.ai_log("🚀 BOOT SEQUENCE: ENGAGED")
         try:
             lazy_load_core()
@@ -248,9 +214,11 @@ class SoleNodeApp(ctk.CTk):
         self.tab_scraper = self.tabview.add("SCRAPER")
         self.tab_tasks = self.tabview.add("SNIPER SLOTS")
         self.tab_automation = self.tabview.add("AUTOMATION HUB")
+        self.tab_intel = self.tabview.add("INNER CIRCLE")
         self.tab_gemini = self.tabview.add("AI COMMAND CENTER")
         self.tab_profiles = self.tabview.add("PROFILES")
         self.tab_settings = self.tabview.add("SETTINGS")
+
 
         # --- TAB: SCRAPER ---
         self.fleet_group = ctk.CTkFrame(self.tab_scraper, fg_color="#1a1c22", corner_radius=15)
@@ -320,9 +288,24 @@ class SoleNodeApp(ctk.CTk):
         self.pitch_slider.pack(pady=10)
         self.pitch_slider.set(800)
 
-        ctk.CTkButton(self.tab_automation, text="RUN SNIPE TEST (SHELFLIFE)", command=self.manual_test_atc).pack(pady=20)
+        # --- TAB: INNER CIRCLE (REAL-TIME SIGNALS) ---
+        self.intel_header = ctk.CTkFrame(self.tab_intel, fg_color="transparent")
+        self.intel_header.pack(fill="x", padx=20, pady=10)
+        
+        ctk.CTkLabel(self.intel_header, text="RESELLER_SIGNALS", font=("Inter", 22, "bold"), text_color="#3a86ff").pack(side="left")
+        ctk.CTkLabel(self.intel_header, text="🔴 LIVE FROM THE DISCORD INNER CIRCLE", font=("Inter", 10, "bold"), text_color="#dc3545").pack(side="left", padx=15, pady=5)
+        
+        self.refresh_intel_btn = ctk.CTkButton(self.intel_header, text="RELOAD SIGNALS", width=120, height=30, command=self.refresh_community_intel, fg_color="#1a1c22")
+        self.refresh_intel_btn.pack(side="right")
+
+        self.intel_scroll = ctk.CTkScrollableFrame(self.tab_intel, fg_color="transparent")
+        self.intel_scroll.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        
+        # Method will populate this frame
+        self.after(2000, self.refresh_community_intel)
 
         # --- TAB: AI COMMAND CENTER ---
+
         self.gemini_frame = ctk.CTkFrame(self.tab_gemini, fg_color="transparent")
         self.gemini_frame.pack(fill="both", expand=True, padx=20, pady=20)
         self.ai_log_box = ctk.CTkTextbox(self.gemini_frame, font=("Inter", 12))
@@ -1920,6 +1903,65 @@ class SoleNodeApp(ctk.CTk):
         # Auto-close after 60 seconds to prevent clutter
         self.after(60000, lambda: popup.destroy() if popup.winfo_exists() else None)
 
+    def refresh_community_intel(self):
+        """Fetches community-driven reseller signals and implements Tier-Locks"""
+        try:
+            # Clear current feed
+            for widget in self.intel_scroll.winfo_children():
+                widget.destroy()
+                
+            resp = requests.get(f"{HUB_URL}/api/v1/discord-intel", params={"limit": 8})
+            if resp.status_code == 200:
+                signals = resp.json()
+                
+                # Check for Marksman level (Pro/Elite/Admin)
+                is_marksman = self.user_tier in ["Pro", "Elite", "Admin"]
+                
+                for i, sig in enumerate(signals):
+                    show_content = True
+                    if i >= len(signals) - 3 and not is_marksman:
+                        show_content = False
+                    
+                    self.add_intel_card(sig, locked=not show_content)
+                
+                if not is_marksman:
+                    # Add CTA at bottom
+                    cta_frame = ctk.CTkFrame(self.intel_scroll, fg_color="#1a1c22", border_width=1, border_color="#FF3D00")
+                    cta_frame.pack(fill="x", pady=20, padx=10)
+                    ctk.CTkLabel(cta_frame, text="🛡️ BECOME A MARKSMAN TO UNLOCK FULL FEED", font=("Inter", 13, "bold"), text_color="#FF3D00").pack(pady=10)
+                    ctk.CTkButton(cta_frame, text="UPGRADE TO MARKSMAN (PRO)", command=lambda: webbrowser.open("https://soleseek.io/pricing"),
+                                   fg_color="#FF3D00", font=("Inter", 11, "bold")).pack(pady=10)
+            else:
+                self.log(f"⚠️ Intel Sync: Hub status {resp.status_code}")
+        except Exception as e:
+            self.log(f"❌ Intel Sync Failed: {e}")
+
+    def add_intel_card(self, data, locked=False):
+        card = ctk.CTkFrame(self.intel_scroll, fg_color="#1a1c22", corner_radius=10, border_width=1, border_color="#2d2d33")
+        card.pack(fill="x", pady=5, padx=5)
+        
+        info_row = ctk.CTkFrame(card, fg_color="transparent")
+        info_row.pack(fill="x", padx=15, pady=8)
+        
+        author_lbl = ctk.CTkLabel(info_row, text=f"@{data['author'].upper()}", font=("Inter", 10, "bold"), text_color="#3a86ff")
+        author_lbl.pack(side="left")
+        
+        chan_lbl = ctk.CTkLabel(info_row, text=f"#{data['channel']}", font=("Inter", 9), text_color="gray")
+        chan_lbl.pack(side="left", padx=10)
+        
+        ts = data.get('timestamp', '')[:16].replace('T', ' ')
+        ctk.CTkLabel(info_row, text=ts, font=("Inter", 8), text_color="#444").pack(side="right")
+        
+        if locked:
+            lock_label = ctk.CTkLabel(card, text="[ ENCRYPTED SIGNAL: MARKSMAN TIER REQUIRED ]", 
+                                     font=("Consolas", 12, "bold", "italic"), text_color="#FF3D00")
+            lock_label.pack(pady=20)
+        else:
+            content = data['content']
+            if len(content) > 150: content = content[:147] + "..."
+            ctk.CTkLabel(card, text=content, font=("Inter", 12), wraplength=800, justify="left", anchor="w").pack(padx=20, pady=(0, 15), fill="x")
+
+
     def on_closing(self):
         # Confirm close if monitoring
         if self.monitoring:
@@ -1931,19 +1973,38 @@ class SoleNodeApp(ctk.CTk):
         sys.exit(0)
 
 if __name__ == "__main__":
-    lazy_load_core()
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--scale", type=int, default=1)
     args, unknown = parser.parse_known_args()
     
     try:
+        print(">>> INITIALIZING SOLESEEK_HUB_GUI...")
+        lazy_load_core()
+        
         app = SoleNodeApp()
         app.scale_val = args.scale
         app.scale = args.scale # Fallback
         app.mainloop()
     except Exception as e:
-        with open("crash_log.txt", "w", encoding="utf-8") as f:
-            f.write(f"SYSTEM CRASH: {e}\n")
-            f.write(traceback.format_exc())
-        print(f"❌ CRITICAL ERROR SAVED TO crash_log.txt: {e}")
+        error_msg = f"SYSTEM CRASH: {e}\n\n{traceback.format_exc()}"
+        try:
+            with open("crash_log.txt", "w", encoding="utf-8") as f:
+                f.write(error_msg)
+        except: pass
+        
+        print(f"❌ CRITICAL ERROR: {e}")
+        
+        # Show a popup if possible so explorer users know what happened
+        try:
+            from tkinter import messagebox
+            import tkinter as tk
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("SoleSeek Monitor | CRITICAL ERROR", 
+                                f"The system failed to boot:\n\n{e}\n\nCheck crash_log.txt for details.")
+            root.destroy()
+        except:
+            pass
+        sys.exit(1)
+

@@ -7,3 +7,4 @@ google-generativeai
 pynacl
 pydantic
 beautifulsoup4
+curl_cffi

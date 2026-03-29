@@ -13,7 +13,16 @@ def seed_users():
             "tier": "Standard", # Standard: Up to 3 Alerts, Pro: Up to 1000 Alerts
             "subscription_status": "active",
             "created_at": firestore.SERVER_TIMESTAMP
+        },
+        {
+            "email": "taunhealy@gmail.com",
+            "full_name": "Taun Healy",
+            "tier": "Pro",
+            "subscription_status": "active",
+            "created_at": firestore.SERVER_TIMESTAMP
         }
+
+
     ]
     
     for user in users:

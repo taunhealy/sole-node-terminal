@@ -40,11 +40,17 @@ import {
   X,
   Layers,
   ChevronRight,
+  ChevronLeft,
   LayoutDashboard,
+
   Sparkles,
   MessageSquare,
-  ShoppingBag
+  ShoppingBag,
+  Calendar,
+  Tag,
+  ShoppingCart
 } from 'lucide-react'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -91,7 +97,58 @@ export default function TerminalBoard() {
   const [logs, setLogs] = useState<RestockLog[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState('hot')
+  const [activeTab, setActiveTab] = useState('NEW_RELEASES')
+  const [resellerSales, setResellerSales] = useState<any[]>([])
+  const [loadingSales, setLoadingSales] = useState(false)
+
+  const [aiAnalysisItem, setAiAnalysisItem] = useState<StockItem | null>(null)
+  const [aiAnalysisContent, setAiAnalysisContent] = useState<string>('')
+  const [aiBackstoryContent, setAiBackstoryContent] = useState<string>('')
+  const [aiActiveTab, setAiActiveTab] = useState<'intel' | 'info'>('intel')
+  const [loadingAi, setLoadingAi] = useState(false)
+
+  const fetchAiResellAnalysis = async (item: StockItem) => {
+    console.log("📡 INITIATING_AI_ANALYSIS_RECON:", item.product_title);
+    setAiAnalysisItem(item)
+    setLoadingAi(true)
+    setAiAnalysisContent('')
+    setAiBackstoryContent('')
+    setAiActiveTab('intel')
+    try {
+      const baseUrl = "https://solenode-api-eu-256432107914.europe-west1.run.app"
+      const resp = await fetch(`${baseUrl}/api/v1/ai/resell-analysis?title=${encodeURIComponent(item.product_title)}&price=${item.current_price || 0}`)
+      const data = await resp.json()
+      console.log("✅ INTELLIGENCE_RECEIVED:", data);
+      setAiAnalysisContent(data.analysis || '📡 INTELLIGENCE_JAMMED')
+      setAiBackstoryContent(data.backstory || '📡 HERITAGE_LINK_SEVERED')
+    } catch (e) {
+      console.error("❌ UPLINK_FAILURE:", e);
+      setAiAnalysisContent('📡 UPLINK_FAILURE: AI sector unreachable.')
+      setAiBackstoryContent('📡 UPLINK_FAILURE: AI sector unreachable.')
+    } finally {
+      setLoadingAi(false)
+    }
+  }
+
+  const fetchResellerSales = async () => {
+    setLoadingSales(true)
+    try {
+      const resp = await fetch("https://solenode-api-eu-256432107914.europe-west1.run.app/api/v1/reseller-sales")
+      const data = await resp.json()
+      setResellerSales(data.sales || [])
+    } catch (e) {
+      console.error("❌ SALES_FETCH_FAILED:", e)
+    } finally {
+      setLoadingSales(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'RECENT_SALES') {
+      fetchResellerSales()
+    }
+  }, [activeTab])
+
   const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [lastLogId, setLastLogId] = useState<string | null>(null)
@@ -388,11 +445,18 @@ export default function TerminalBoard() {
         </div>
 
         <nav className="flex-1 px-2 space-y-1">
+          <NavItem icon={<Sparkles className="w-4 h-4 text-ds-blue" />} label="Sneaker Of The Day" active={activeTab === 'daily'} onClick={() => setActiveTab('daily')} />
+          <div className="h-px bg-ds-border my-2 mx-2 opacity-30" />
           <NavItem icon={<Flame className="w-4 h-4" />} label="Hot Pairs" active={activeTab === 'hot'} onClick={() => setActiveTab('hot')} />
+          <NavItem icon={<Calendar className="w-4 h-4 text-ds-blue" />} label="Drop Calendar" active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
+          <div className="h-px bg-ds-border my-2 mx-2 opacity-30" />
           <NavItem icon={<TrendingUp className="w-4 h-4" />} label="New Releases" active={activeTab === 'releases'} onClick={() => setActiveTab('releases')} />
           <NavItem icon={<Activity className="w-4 h-4" />} label="Restocks" active={activeTab === 'restocks'} onClick={() => setActiveTab('restocks')} />
           <NavItem icon={<Zap className={`w-4 h-4 ${activeTab === 'sales' ? 'text-ds-blue' : ''}`} />} label="Sales" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} />
           <NavItem icon={<Star className={`w-4 h-4 ${watchlistSids.length > 0 ? 'fill-current' : ''}`} />} label="Watchlist" count={watchlistSids.length} active={activeTab === 'watchlist'} onClick={() => setActiveTab('watchlist')} />
+          <NavItem icon={<ShoppingCart className="w-4 h-4 text-ds-blue" />} label="Market Archive" active={activeTab === 'RECENT_SALES'} onClick={() => setActiveTab('RECENT_SALES')} />
+
+
           <Link 
             href="/resell" 
             className="flex items-center gap-3 px-4 py-3 rounded-xl mx-2 text-ds-text-dim hover:bg-ds-indigo/5 hover:text-ds-indigo transition-all group mt-2 border border-transparent hover:border-white/5"
@@ -534,253 +598,339 @@ export default function TerminalBoard() {
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto custom-scrollbar">
-            {/* Desktop Table */}
-            <div className="hidden md:block">
-              <table className="w-full text-left">
-                <thead className="sticky top-0 bg-ds-surface z-10 text-[10px] font-black uppercase tracking-widest">
-                  <tr className="border-b border-white/5">
-                    <th className="px-6 py-4 text-left min-w-[340px] text-ds-text-dim">Product / SKU</th>
-                    <th className="px-4 py-4 text-center w-[120px] text-ds-text-dim">Modified</th>
-                    <th className="px-2 py-4 text-center w-[100px] relative text-ds-text-dim">
-                        <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'size' ? null : 'size')}>
-                          Size
-                          <SlidersHorizontal className={`w-3 h-3 ${sizeFilters.length > 0 ? 'text-ds-blue' : 'text-slate-500'} group-hover:text-white transition-colors`} />
-                        </div>
-                        <FilterDropdown 
-                          isOpen={activeFilter === 'size'} 
-                          options={allSizes} 
-                          selected={sizeFilters} 
-                          onToggle={(v: string) => {
-                            setSizeFilters((pv: string[]) => pv.includes(v) ? pv.filter(x => x !== v) : [...pv, v]);
-                          }} 
-                          headerContent={(
-                            <button 
-                              onClick={() => setOnlyMoneySizes(!onlyMoneySizes)}
-                              className={`w-full py-2 mb-2 rounded-lg font-black text-[9px] tracking-[0.1em] transition-all border flex items-center justify-center gap-2 ${
-                                onlyMoneySizes 
-                                  ? 'bg-yellow-500 text-ds-bg border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.2)]' 
-                                  : 'bg-yellow-500/5 text-yellow-500/50 border-yellow-500/20 hover:bg-yellow-500/10 hover:text-yellow-500 hover:border-yellow-500/40 opacity-40 hover:opacity-100'
-                              }`}
-                            >
-                              <Zap className={`w-3 h-3 ${onlyMoneySizes ? 'fill-current' : ''}`} />
-                              MONEY ADULT RANGE (UK 7-10.5)
-                            </button>
+            {activeTab === 'RECENT_SALES' ? (
+              <div className="space-y-4 p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter text-white">MARKET_ARCHIVE</h2>
+                    <p className="text-[10px] text-ds-text-dim/60 font-medium tracking-[0.2em] uppercase mt-1">
+                      Historical_Reseller_Market_Activity
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="h-10 px-4 bg-ds-bg rounded-xl border border-white/5 flex items-center gap-3">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-ds-indigo">Scanned:</span>
+                      <span className="text-[10px] font-black text-white">{resellerSales.length} Units</span>
+                    </div>
+                  </div>
+                </div>
+
+                {loadingSales ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-4 bg-ds-bg/50 rounded-3xl border border-white/5">
+                    <div className="w-12 h-12 border-2 border-ds-indigo/20 border-t-ds-indigo rounded-full animate-spin" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ds-indigo animate-pulse">Syncing_Reseller_Telemetry...</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {resellerSales.map((sale, idx) => (
+                      <div key={idx} className="bg-ds-bg rounded-2xl border border-white/5 p-4 group transition-all hover:border-ds-indigo/30 hover:shadow-[0_0_30px_rgba(129,140,248,0.1)]">
+                        <div className="aspect-square bg-black/40 rounded-xl mb-4 overflow-hidden relative border border-white/5">
+                          {sale.image_url ? (
+                            <img src={sale.image_url} alt={sale.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-ds-text-dim font-black uppercase text-[10px]">No_Visual</div>
                           )}
-                          onClear={() => { setSizeFilters([]); setOnlyMoneySizes(false); setActiveFilter(null); }}
-                        />
-                    </th>
-                    <th className="px-2 py-4 text-center w-[80px] text-ds-text-dim">
-                        <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setGenderSort(prev => prev === 'asc' ? 'desc' : (prev === 'desc' ? null : 'asc'))}>
-                          Gender
-                          {genderSort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
-                          genderSort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
-                          <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white transition-opacity opacity-0 group-hover:opacity-100" />}
+                          <div className="absolute top-2 right-2 px-2 py-1 bg-ds-indigo/80 text-white text-[8px] font-black rounded uppercase">SOLD</div>
                         </div>
-                    </th>
-                      <th className="px-4 py-4 text-center w-[140px] text-ds-text-dim">
-                        <div 
-                          className="flex items-center justify-center gap-2 group cursor-pointer hover:text-white transition-colors"
-                          onClick={() => setCompareOnly(!compareOnly)}
+                        <div className="space-y-2">
+                          <span className="text-[8px] font-black text-ds-indigo uppercase tracking-[0.2em]">{sale.boutique}</span>
+                          <h3 className="text-white font-bold text-sm leading-tight group-hover:text-ds-indigo transition-colors">{sale.title}</h3>
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-xs font-black text-ds-text-dim">{sale.price}</span>
+                            <a href={sale.link} target="_blank" rel="noreferrer" className="p-2 bg-white/5 hover:bg-ds-indigo hover:text-white rounded-lg transition-colors">
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'daily' ? (
+              <SneakerOfTheDayView 
+                onAction={(title) => {
+                  setSearchTerm(title)
+                  setActiveTab('hot')
+                }} 
+              />
+            ) : activeTab === 'calendar' ? (
+              <DropCalendarView />
+            ) : (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <table className="w-full text-left">
+                    <thead className="sticky top-0 bg-ds-surface z-10 text-[10px] font-black uppercase tracking-widest">
+                      <tr className="border-b border-white/5">
+                        <th className="px-6 py-4 text-left min-w-[340px] text-ds-text-dim">Product / SKU</th>
+                        <th className="px-4 py-4 text-center w-[120px] text-ds-text-dim">Modified</th>
+                        <th className="px-2 py-4 text-center w-[100px] text-ds-text-dim">Retail</th>
+                        <th className="px-2 py-4 text-center w-[100px] text-ds-text-dim">Resell (Est)</th>
+                        <th className="px-6 py-4 text-right w-[80px] text-ds-text-dim">AI Intel</th>
+                        <th className="px-2 py-4 text-center w-[100px] relative text-ds-text-dim">
+                          <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'size' ? null : 'size')}>
+                            Size
+                            <SlidersHorizontal className={`w-3 h-3 ${sizeFilters.length > 0 ? 'text-ds-blue' : 'text-slate-500'} group-hover:text-white transition-colors`} />
+                          </div>
+                          <FilterDropdown 
+                            isOpen={activeFilter === 'size'} 
+                            options={allSizes} 
+                            selected={sizeFilters} 
+                            onToggle={(v: string) => {
+                              setSizeFilters((pv: string[]) => pv.includes(v) ? pv.filter(x => x !== v) : [...pv, v]);
+                            }} 
+                            headerContent={(
+                              <button 
+                                onClick={() => setOnlyMoneySizes(!onlyMoneySizes)}
+                                className={`w-full py-2 mb-2 rounded-lg font-black text-[9px] tracking-[0.1em] transition-all border flex items-center justify-center gap-2 ${
+                                  onlyMoneySizes 
+                                    ? 'bg-yellow-500 text-ds-bg border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.2)]' 
+                                    : 'bg-yellow-500/5 text-yellow-500/50 border-yellow-500/20 hover:bg-yellow-500/10 hover:text-yellow-500 hover:border-yellow-500/40 opacity-40 hover:opacity-100'
+                                }`}
+                              >
+                                <Zap className={`w-3 h-3 ${onlyMoneySizes ? 'fill-current' : ''}`} />
+                                MONEY ADULT RANGE (UK 7-10.5)
+                              </button>
+                            )}
+                            onClear={() => { setSizeFilters([]); setOnlyMoneySizes(false); setActiveFilter(null); }}
+                          />
+                        </th>
+                        <th className="px-2 py-4 text-center w-[80px] text-ds-text-dim">
+                          <div className="flex items-center justify-center gap-2 group cursor-pointer" onClick={() => setGenderSort(prev => prev === 'asc' ? 'desc' : (prev === 'desc' ? null : 'asc'))}>
+                            Gender
+                            {genderSort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
+                            genderSort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
+                            <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white transition-opacity opacity-0 group-hover:opacity-100" />}
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-center w-[140px] text-ds-text-dim">
+                          <div 
+                            className="flex items-center justify-center gap-2 group cursor-pointer hover:text-white transition-colors"
+                            onClick={() => setCompareOnly(!compareOnly)}
                           >
                             Compare
                             <ChevronRight className={`w-3.5 h-3.5 transition-all ${compareOnly ? 'text-ds-blue rotate-90 scale-125' : 'text-slate-500 group-hover:text-white rotate-0'}`} />
-                        </div>
-                      </th>
-                    <th className="px-4 py-4 text-left w-[140px] relative text-ds-text-dim">
-                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'store' ? null : 'store')}>
-                          Store
-                          <SlidersHorizontal className={`w-3 h-3 ${storeFilters.length < 5 ? 'text-ds-blue' : 'text-slate-500'} group-hover:text-white transition-colors`} />
-                        </div>
-                        <FilterDropdown 
-                          isOpen={activeFilter === 'store'} 
-                          options={['Shelflife', 'Jack Lemkus', 'Archive', 'Soul Gallery', 'The Plug and Play', 'Court Order']} 
-                          selected={storeFilters} 
-                          onToggle={(v: string) => setStoreFilters((pv: string[]) => pv.includes(v) ? pv.filter(x => x !== v) : [...pv, v])} 
-                          onClear={() => { setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Soul Gallery', 'The Plug and Play', 'Court Order']); setActiveFilter(null); }}
-                        />
-                    </th>
-                    <th className="px-4 py-4 text-right w-[120px] relative text-ds-text-dim">
-                        <div className="flex items-center justify-end gap-2 group cursor-pointer" onClick={() => setPriceSort(prev => prev === 'asc' ? 'desc' : (prev === 'desc' ? null : 'asc'))}>
-                          Price
-                          {priceSort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
-                            priceSort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
-                            <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white" />}
-                        </div>
-                    </th>
-                    <th className="px-4 py-4 text-right w-[110px] text-ds-text-dim">
-                        <div className="flex items-center justify-end gap-2 group cursor-pointer" onClick={() => setInventorySort(prev => prev === 'desc' ? 'asc' : (prev === 'asc' ? null : 'desc'))}>
-                          Inventory
-                          {inventorySort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
-                          inventorySort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
-                          <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white transition-opacity opacity-0 group-hover:opacity-100" />}
-                        </div>
-                    </th>
-                    <th className="px-6 py-4 text-right w-[150px] pr-10 text-ds-text-dim">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStock.map((item) => (
-                    <tr key={item.sku_id} className="hover:bg-white/5 border-b border-ds-border group transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <a 
-                            href={item.url || '#'} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="font-bold hover:text-ds-blue flex items-center gap-1.5 transition-colors group/link truncate max-w-[340px]"
-                            suppressHydrationWarning
-                          >
-                            {item.product_title}
-                            <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                          </a>
-                          <span className="text-[10px] text-ds-text-dim font-black">{item.sku_id}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-[10px] font-black uppercase text-ds-text-dim tracking-tighter" suppressHydrationWarning>
-                            {item.last_updated ? `${new Date(item.last_updated.seconds * 1000).getDate()} ${new Date(item.last_updated.seconds * 1000).toLocaleDateString([], { month: 'short' })}` : '—'}
-                        </span>
-                      </td>
-                      <td className="px-2 py-4 text-center">
-                        <SizeBadge size={item.size_title} />
-                      </td>
-                      <td className="px-2 py-4 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${item.product_title.toLowerCase().includes("women's") ? 'bg-pink-500/10 text-pink-500 border border-pink-500/20' : 'bg-ds-cyan-deep text-ds-cyan border border-ds-cyan-border'}`}>
-                          {item.product_title.toLowerCase().includes("women's") ? 'F' : 'M'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center w-[140px]">
-                          {(productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size || 0) > 1 ? (
-                            <button 
-                              onClick={() => setComparingProduct(productGroupings.titleToKey[item.product_title])}
-                              className="bg-ds-indigo/10 border border-ds-indigo/30 hover:bg-ds-indigo hover:text-white text-ds-indigo px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-2"
-                            >
-                              <Layers className="w-3 h-3" />
-                              Compare ({productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size})
-                            </button>
-                          ) : (
-                            <span className="text-[10px] font-black uppercase text-white/10 italic">Single_Node</span>
-                          )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`text-[11px] font-black uppercase ${
-                          item.store === 'Shelflife' ? 'text-ds-orange' :
-                          item.store === 'Jack Lemkus' ? 'text-yellow-500' :
-                          item.store === 'Archive' ? 'text-white' :
-                          item.store === 'Soul Gallery' ? 'text-indigo-400' :
-                          item.store === 'The Plug and Play' ? 'text-teal-400' :
-                          item.store === 'Court Order' ? 'text-slate-400' :
-                          'text-ds-blue'
-                        }`}>{item.store}</span>
-                      </td>
-                      <td className="px-4 py-4 text-right font-black">
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center gap-2">
-                               <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-green' : 'text-white'}`}>
-                                   R{(item.current_price ?? 0).toLocaleString()}
-                               </span>
-                               {(item.original_price || 0) !== (item.current_price || 0) && item.original_price !== 0 && (
-                                 <span className={`text-[9px] font-black px-1 rounded animate-pulse ${
-                                   (item.current_price! > item.original_price!) ? 'bg-ds-blue/10 text-ds-blue' : 'bg-ds-red/10 text-ds-red'
-                                 }`}>
-                                   {(item.current_price! > item.original_price!) ? '+' : '-'}
-                                   {Math.round(Math.abs((item.original_price! - item.current_price!) / item.original_price! * 100))}%
-                                 </span>
-                               )}
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left w-[140px] relative text-ds-text-dim">
+                          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setActiveFilter(activeFilter === 'store' ? null : 'store')}>
+                            Store
+                            <SlidersHorizontal className={`w-3 h-3 ${storeFilters.length < 5 ? 'text-ds-blue' : 'text-slate-500'} group-hover:text-white transition-colors`} />
+                          </div>
+                          <FilterDropdown 
+                            isOpen={activeFilter === 'store'} 
+                            options={['Shelflife', 'Jack Lemkus', 'Archive', 'Soul Gallery', 'The Plug and Play', 'Court Order']} 
+                            selected={storeFilters} 
+                            onToggle={(v: string) => setStoreFilters((pv: string[]) => pv.includes(v) ? pv.filter(x => x !== v) : [...pv, v])} 
+                            onClear={() => { setStoreFilters(['Shelflife', 'Jack Lemkus', 'Archive', 'Soul Gallery', 'The Plug and Play', 'Court Order']); setActiveFilter(null); }}
+                          />
+                        </th>
+                        <th className="px-4 py-4 text-right w-[110px] relative text-ds-text-dim">
+                          <div className="flex items-center justify-end gap-2 group cursor-pointer" onClick={() => setPriceSort(prev => prev === 'asc' ? 'desc' : (prev === 'desc' ? null : 'asc'))}>
+                            Retail
+                            {priceSort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
+                              priceSort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
+                              <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white" />}
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-right w-[110px] text-ds-text-dim">Resell (Est)</th>
+                        <th className="px-4 py-4 text-right w-[110px] text-ds-text-dim">
+                          <div className="flex items-center justify-end gap-2 group cursor-pointer" onClick={() => setInventorySort(prev => prev === 'desc' ? 'asc' : (prev === 'asc' ? null : 'desc'))}>
+                            Inventory
+                            {inventorySort === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-ds-blue" /> : 
+                            inventorySort === 'desc' ? <ChevronDown className="w-3.5 h-3.5 text-ds-blue" /> : 
+                            <SlidersHorizontal className="w-3 h-3 text-slate-500 group-hover:text-white transition-opacity opacity-0 group-hover:opacity-100" />}
+                          </div>
+                        </th>
+                        <th className="px-6 py-4 text-right w-[180px] pr-10 text-ds-text-dim">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStock.map((item) => (
+                        <tr key={item.sku_id} className="hover:bg-white/5 border-b border-ds-border group transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <a 
+                                href={item.url || '#'} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="font-bold hover:text-ds-blue flex items-center gap-1.5 transition-colors group/link truncate max-w-[340px]"
+                                suppressHydrationWarning
+                              >
+                                {item.product_title}
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                              </a>
+                              <span className="text-[10px] text-ds-text-dim font-black">{item.sku_id}</span>
                             </div>
-                            {(item.current_price ?? 0) < (item.original_price ?? 0) && (
-                              <span className="text-[9px] line-through text-gray-400 opacity-50">R{(item.original_price ?? 0).toLocaleString()}</span>
-                            )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                          <InventoryBadge soh={item.soh} />
-                      </td>
-                      <td className="px-6 py-4 text-right pr-10">
-                        <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} currentCount={watchlistSids.length} tier={appUser?.tier || 'Free'} email={userEmail} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card Layout */}
-            <div className="md:hidden grid grid-cols-1 gap-4 p-4">
-                {filteredStock.map((item) => (
-                   <div key={item.sku_id} className="bg-ds-surface border border-ds-border rounded-xl p-4 space-y-3 relative overflow-hidden group">
-                      <div className="flex justify-between items-start">
-                         <div className="flex-1">
-                            <a 
-                              href={item.url || '#'} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="font-bold text-sm block mb-1 group-hover:text-ds-blue transition-colors"
-                            >
-                               {item.product_title}
-                            </a>
-                            <span className="text-[10px] text-ds-text-dim font-black uppercase tracking-tighter">{item.sku_id}</span>
-                         </div>
-                         <div className="flex flex-col items-end gap-1.5 shrink-0">
-                            <div className="flex items-center gap-2">
-                               <span className="text-white font-black tracking-tighter">R{(item.current_price ?? 0).toLocaleString()}</span>
-                               {(item.original_price || 0) !== (item.current_price || 0) && item.original_price !== 0 && (
-                                 <div className="flex flex-col items-end leading-none">
-                                    <span className="text-[8px] line-through text-ds-text-dim opacity-40">R{item.original_price?.toLocaleString()}</span>
-                                    <span className={`text-[8px] font-black animate-pulse ${
-                                      (item.current_price! > item.original_price!) ? 'text-ds-blue' : 'text-ds-red'
-                                    }`}>
-                                      {(item.current_price! > item.original_price!) ? '+' : '-'}
-                                      {Math.round(Math.abs((item.original_price! - item.current_price!) / item.original_price! * 100))}%
-                                    </span>
-                                 </div>
-                               )}
-                            </div>
-                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                               item.store === 'Shelflife' ? 'bg-ds-orange/10 text-ds-orange border border-ds-orange/20' :
-                               item.store === 'Jack Lemkus' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
-                               item.store === 'Archive' ? 'bg-white/10 text-white border border-white/20' :
-                               item.store === 'Soul Gallery' ? 'bg-indigo-400/10 text-indigo-400 border border-indigo-400/20' :
-                               item.store === 'The Plug and Play' ? 'bg-teal-400/10 text-teal-400 border border-teal-400/20' :
-                               item.store === 'Court Order' ? 'bg-slate-400/10 text-slate-400 border border-slate-400/20' :
-                               'bg-ds-blue/10 text-ds-blue border border-ds-blue/20'
-                            }`}>{item.store}</span>
-                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                         <div className="flex items-center gap-2">
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className="text-[10px] font-black uppercase text-ds-text-dim tracking-tighter" suppressHydrationWarning>
+                                {item.last_updated ? `${new Date(item.last_updated.seconds * 1000).getDate()} ${new Date(item.last_updated.seconds * 1000).toLocaleDateString([], { month: 'short' })}` : '—'}
+                            </span>
+                          </td>
+                          <td className="px-2 py-4 text-center">
                             <SizeBadge size={item.size_title} />
-                            <InventoryBadge soh={item.soh} />
-                         </div>
-                         <div className="flex items-center gap-2">
-                            {(productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size || 0) > 1 && (
-                               <button 
-                                 onClick={() => setComparingProduct(productGroupings.titleToKey[item.product_title])}
-                                 className="p-2 bg-ds-indigo/10 text-ds-indigo rounded-lg border border-ds-indigo/20"
-                               >
-                                  <Layers className="w-4 h-4" />
-                               </button>
-                            )}
-                            <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} currentCount={watchlistSids.length} tier={appUser?.tier || 'Free'} email={userEmail} />
-                         </div>
-                      </div>
-                   </div>
-                ))}
-            </div>
+                          </td>
+                          <td className="px-2 py-4 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${item.product_title.toLowerCase().includes("women's") ? 'bg-pink-500/10 text-pink-500 border border-pink-500/20' : 'bg-ds-cyan-deep text-ds-cyan border border-ds-cyan-border'}`}>
+                              {item.product_title.toLowerCase().includes("women's") ? 'F' : 'M'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-center w-[140px]">
+                              {(productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size || 0) > 1 ? (
+                                <button 
+                                  onClick={() => setComparingProduct(productGroupings.titleToKey[item.product_title])}
+                                  className="bg-ds-indigo/10 border border-ds-indigo/30 hover:bg-ds-indigo hover:text-white text-ds-indigo px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-2"
+                                >
+                                  <Layers className="w-3 h-3" />
+                                  Compare ({productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size})
+                                </button>
+                              ) : (
+                                <span className="text-[10px] font-black uppercase text-white/10 italic">Single_Node</span>
+                              )}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`text-[11px] font-black uppercase ${
+                              item.store === 'Shelflife' ? 'text-ds-orange' :
+                              item.store === 'Jack Lemkus' ? 'text-yellow-500' :
+                              item.store === 'Archive' ? 'text-white' :
+                              item.store === 'Soul Gallery' ? 'text-indigo-400' :
+                              item.store === 'The Plug and Play' ? 'text-teal-400' :
+                              item.store === 'Court Order' ? 'text-slate-400' :
+                              'text-ds-blue'
+                            }`}>{item.store}</span>
+                          </td>
+                          <td className="px-4 py-4 text-right font-black">
+                            <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-2">
+                                   <span className={`${(item.current_price ?? 0) < (item.original_price ?? 0) ? 'text-ds-green' : 'text-white'}`}>
+                                       R{(item.current_price ?? 0).toLocaleString()}
+                                   </span>
+                                   {(item.original_price || 0) !== (item.current_price || 0) && item.original_price !== 0 && (
+                                     <span className={`text-[9px] font-black px-1 rounded animate-pulse ${
+                                       (item.current_price! > item.original_price!) ? 'bg-ds-blue/10 text-ds-blue' : 'bg-ds-red/10 text-ds-red'
+                                     }`}>
+                                       {(item.current_price! > item.original_price!) ? '+' : '-'}
+                                       {Math.round(Math.abs((item.original_price! - item.current_price!) / item.original_price! * 100))}%
+                                     </span>
+                                   )}
+                                </div>
+                                {(item.current_price ?? 0) < (item.original_price ?? 0) && (
+                                  <span className="text-[9px] line-through text-gray-400 opacity-50">R{(item.original_price ?? 0).toLocaleString()}</span>
+                                )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <span className="text-ds-indigo font-black">R{item.current_price ? Math.round(item.current_price * 1.45).toLocaleString() : '---'}</span>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                              <InventoryBadge soh={item.soh} />
+                          </td>
+                          <td className="px-6 py-4 text-right pr-10">
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => fetchAiResellAnalysis(item)}
+                                className="p-1.5 rounded-lg bg-ds-indigo/10 border border-ds-indigo/30 text-ds-indigo hover:bg-ds-indigo hover:text-white transition-all shadow-[0_0_15px_rgba(129,140,248,0.2)]"
+                                title="Fetch AI Intel"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                              </button>
+                              <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} currentCount={watchlistSids.length} tier={appUser?.tier || 'Free'} email={userEmail} />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-            {filteredStock.length < allFilteredResults.length && (
-              <div className="p-12 flex justify-center border-t border-white/5 bg-[#0d0f14]/50">
-                <button 
-                   onClick={() => setVisibleCount(prev => prev + 100)}
-                   className="px-12 py-4 bg-ds-indigo/10 border border-ds-indigo/20 text-ds-indigo rounded-2xl font-bold text-lg hover:bg-ds-indigo/20 hover:text-white transition-all shadow-2xl backdrop-blur-md"
-                >
-                  Load More ({allFilteredResults.length - filteredStock.length} Remaining)
-                </button>
-              </div>
+                {/* Mobile Card Layout */}
+                <div className="md:hidden grid grid-cols-1 gap-4 p-4">
+                    {filteredStock.map((item) => (
+                       <div key={item.sku_id} className="bg-ds-surface border border-ds-border rounded-xl p-4 space-y-3 relative overflow-hidden group">
+                          <div className="flex justify-between items-start">
+                             <div className="flex-1">
+                                <a 
+                                  href={item.url || '#'} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="font-bold text-sm block mb-1 group-hover:text-ds-blue transition-colors"
+                                >
+                                   {item.product_title}
+                                </a>
+                                <span className="text-[10px] text-ds-text-dim font-black uppercase tracking-tighter">{item.sku_id}</span>
+                             </div>
+                             <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                <div className="flex items-center gap-2">
+                                   <span className="text-white font-black tracking-tighter">R{(item.current_price ?? 0).toLocaleString()}</span>
+                                   {(item.original_price || 0) !== (item.current_price || 0) && item.original_price !== 0 && (
+                                     <div className="flex flex-col items-end leading-none">
+                                        <span className="text-[8px] line-through text-ds-text-dim opacity-40">R{item.original_price?.toLocaleString()}</span>
+                                        <span className={`text-[8px] font-black animate-pulse ${
+                                          (item.current_price! > item.original_price!) ? 'text-ds-blue' : 'text-ds-red'
+                                        }`}>
+                                          {(item.current_price! > item.original_price!) ? '+' : '-'}
+                                          {Math.round(Math.abs((item.original_price! - item.current_price!) / item.original_price! * 100))}%
+                                        </span>
+                                     </div>
+                                   )}
+                                </div>
+                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                                   item.store === 'Shelflife' ? 'bg-ds-orange/10 text-ds-orange border border-ds-orange/20' :
+                                   item.store === 'Jack Lemkus' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                                   item.store === 'Archive' ? 'bg-white/10 text-white border border-white/20' :
+                                   item.store === 'Soul Gallery' ? 'bg-indigo-400/10 text-indigo-400 border border-indigo-400/20' :
+                                   item.store === 'The Plug and Play' ? 'bg-teal-400/10 text-teal-400 border border-teal-400/20' :
+                                   item.store === 'Court Order' ? 'bg-slate-400/10 text-slate-400 border border-slate-400/20' :
+                                   'bg-ds-blue/10 text-ds-blue border border-ds-blue/20'
+                                }`}>{item.store}</span>
+                             </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                             <div className="flex items-center gap-2">
+                                <SizeBadge size={item.size_title} />
+                                <InventoryBadge soh={item.soh} />
+                             </div>
+                              <div className="flex items-center gap-2">
+                                 <button 
+                                   onClick={() => fetchAiResellAnalysis(item)}
+                                   className="p-2 bg-ds-indigo/10 text-ds-indigo rounded-lg border border-ds-indigo/20 shadow-[0_0_15px_rgba(129,140,248,0.2)]"
+                                   title="Fetch AI Intel"
+                                 >
+                                    <Sparkles className="w-4 h-4" />
+                                 </button>
+                                {(productStoreCounts[productGroupings.titleToKey[item.product_title]]?.size || 0) > 1 && (
+                                   <button 
+                                     onClick={() => setComparingProduct(productGroupings.titleToKey[item.product_title])}
+                                     className="p-2 bg-ds-indigo/10 text-ds-indigo rounded-lg border border-ds-indigo/20"
+                                   >
+                                      <Layers className="w-4 h-4" />
+                                   </button>
+                                )}
+                                <WatchButton item={item} isWatched={watchlistSids.includes(item.sku_id)} currentCount={watchlistSids.length} tier={appUser?.tier || 'Free'} email={userEmail} />
+                             </div>
+                          </div>
+                       </div>
+                    ))}
+                </div>
+
+                {filteredStock.length < allFilteredResults.length && (
+                  <div className="p-12 flex justify-center border-t border-white/5 bg-[#0d0f14]/50">
+                    <button 
+                       onClick={() => setVisibleCount(prev => prev + 100)}
+                       className="px-12 py-4 bg-ds-indigo/10 border border-ds-indigo/20 text-ds-indigo rounded-2xl font-bold text-lg hover:bg-ds-indigo/20 hover:text-white transition-all shadow-2xl backdrop-blur-md"
+                    >
+                      Load More ({allFilteredResults.length - filteredStock.length} Remaining)
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
+
 
         <footer className="h-6 bg-ds-surface border-t border-ds-border flex items-center justify-between px-4 text-[10px] text-ds-text-dim">
            <p>© 2026 SOLE SEEK TERMINAL | STATUS: SYSTEM_ONLINE</p>
@@ -823,6 +973,102 @@ export default function TerminalBoard() {
           ))}
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {aiAnalysisItem && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setAiAnalysisItem(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-ds-surface border border-ds-border rounded-2xl shadow-[0_0_100px_rgba(129,140,248,0.15)] overflow-hidden"
+            >
+              <div className="p-1 bg-gradient-to-r from-ds-indigo via-ds-blue to-ds-indigo animate-gradient-x" />
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-ds-indigo/10 rounded-lg border border-ds-indigo/20">
+                      <Sparkles className="w-5 h-5 text-ds-indigo animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-ds-indigo">Market_Intelligence_Node</h3>
+                      <p className="text-[14px] font-bold text-white max-w-[300px] truncate">{aiAnalysisItem.product_title}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setAiAnalysisItem(null)} className="p-2 hover:bg-white/5 rounded-lg text-ds-text-dim transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex gap-1 p-1 bg-ds-bg rounded-xl mb-6 border border-white/5">
+                  <button 
+                    onClick={() => setAiActiveTab('intel')}
+                    className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                      aiActiveTab === 'intel' ? 'bg-ds-indigo text-white' : 'text-ds-text-dim hover:text-white'
+                    }`}
+                  >
+                    Market_Intel
+                  </button>
+                  <button 
+                    onClick={() => setAiActiveTab('info')}
+                    className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                      aiActiveTab === 'info' ? 'bg-ds-indigo text-white' : 'text-ds-text-dim hover:text-white'
+                    }`}
+                  >
+                    Product_Info
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-ds-bg rounded-xl border border-white/5 relative group overflow-hidden min-h-[220px] flex items-center justify-center">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ds-indigo/30 to-transparent" />
+                    
+                    {loadingAi ? (
+                      <div className="flex flex-col items-center gap-3 py-12">
+                        <div className="w-12 h-12 border-2 border-ds-indigo/20 border-t-ds-indigo rounded-full animate-spin" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-ds-indigo animate-pulse">Analyzing_Neural_Paths...</span>
+                      </div>
+                    ) : (
+                      <div className="w-full h-full overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
+                        <p className="text-[12px] leading-relaxed text-ds-text-dim italic whitespace-pre-wrap">
+                          {aiActiveTab === 'intel' ? aiAnalysisContent : aiBackstoryContent}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-ds-bg rounded-lg border border-white/5">
+                      <span className="text-[9px] font-black text-ds-text-dim uppercase tracking-wider block mb-1">Retail_Price</span>
+                      <span className="text-white font-bold">R{aiAnalysisItem.current_price?.toLocaleString() || '---'}</span>
+                    </div>
+                    <div className="p-3 bg-ds-bg rounded-lg border border-white/5">
+                      <span className="text-[9px] font-black text-ds-text-dim uppercase tracking-wider block mb-1">SKU_Reference</span>
+                      <span className="text-white font-bold text-[10px]">{aiAnalysisItem.sku_id || 'ID_N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <button 
+                    onClick={() => setAiAnalysisItem(null)}
+                    className="px-6 py-2 bg-ds-indigo text-white rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-ds-indigo-light transition-all shadow-lg hover:shadow-ds-indigo/20 active:scale-95"
+                  >
+                    Terminate_Session
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {comparingProduct && (
           <>
@@ -1243,3 +1489,280 @@ function IntelligenceSidebar() {
     </div>
   )
 }
+
+function SneakerOfTheDayView({ onAction }: { onAction: (title: string) => void }) {
+  const [sneakers, setSneakers] = useState<any[]>([])
+  const [dayIndex, setDayIndex] = useState(0) // 0 is latest
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const q = query(collection(db, "sneaker_of_the_day"), orderBy("detected_at", "desc"), limit(7))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setSneakers(data)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const currentSneaker = sneakers[dayIndex]
+  const hasNext = dayIndex > 0
+  const hasPrev = dayIndex < sneakers.length - 1
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-20 space-y-4 opacity-50">
+       <div className="w-10 h-10 border-2 border-ds-blue/20 border-t-ds-blue rounded-full animate-spin" />
+       <span className="text-[10px] font-black uppercase tracking-widest text-ds-blue">Loading_Featured_Sneaker</span>
+    </div>
+  )
+
+  if (!currentSneaker) return (
+    <div className="text-center p-20 opacity-30 italic">No Sneaker of the Day logs found. Check back tomorrow.</div>
+  )
+
+  const dateStr = currentSneaker.detected_at?.seconds 
+    ? new Date(currentSneaker.detected_at.seconds * 1000).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()
+    : 'LATEST_DETECTION'
+
+  return (
+    <div className="p-6 md:p-12 max-w-6xl mx-auto space-y-8">
+      {/* --- HUD HEADER: DATE & NAV --- */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col">
+          <span className="text-ds-blue font-black uppercase tracking-[0.4em] text-[10px] mb-1">Sneaker-Of-The-Day_Feed</span>
+          <h2 className="text-2xl font-black italic uppercase tracking-tighter">
+            {dateStr}
+          </h2>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-ds-surface border border-white/5 rounded-2xl">
+          <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-ds-text-dim">Status: Synchronized</span>
+        </div>
+      </div>
+
+      {/* --- HERO SECTION: EPIC SHOWCASE --- */}
+      <section className="relative rounded-[40px] overflow-hidden border border-white/10 bg-ds-surface shadow-2xl group">
+        <div className="absolute inset-0 bg-linear-to-br from-ds-blue/10 via-transparent to-transparent opacity-50 z-0" />
+        
+        <div className="grid lg:grid-cols-2 items-center relative z-10">
+          <div className="relative aspect-square lg:aspect-auto h-full min-h-[500px] bg-black/40 border-r border-white/5 group-hover:bg-black/20 transition-all duration-700">
+             <div className="absolute inset-0 flex items-center justify-center p-8">
+                <img 
+                  src={currentSneaker.image_url || "/sneaker_of_the_day.png"} 
+                  alt={currentSneaker.name} 
+                  className="w-full h-full object-cover rounded-3xl opacity-90 group-hover:scale-105 transition-transform duration-1000 ease-out"
+                />
+             </div>
+             
+             <div className="absolute top-8 left-8">
+               <div className="px-4 py-2 bg-ds-blue/20 backdrop-blur-md rounded-full border border-ds-blue/30 inline-flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-ds-blue animate-pulse" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-ds-blue">HYPE_INTEL_INDEX: 9.8</span>
+               </div>
+             </div>
+          </div>
+
+          <div className="p-10 lg:p-16 relative overflow-hidden">
+             <div className="absolute -top-20 -right-20 w-80 h-80 bg-ds-blue/5 blur-[100px] rounded-full pointer-events-none" />
+             
+             <div className="space-y-6">
+               <div>
+                 <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-2">
+                   {currentSneaker.name}
+                 </h1>
+                 <p className="text-ds-text-dim max-w-md font-medium leading-relaxed uppercase text-[10px] tracking-widest">
+                   The global standard of sneaker excellence. A masterclass in minimal architecture and tactical aesthetic.
+                 </p>
+               </div>
+
+               <div className="flex items-center gap-8">
+                 <div>
+                   <span className="text-[10px] font-black text-ds-text-dim uppercase tracking-widest mb-1 block">RRP_VALUE</span>
+                   <span className="text-2xl font-black italic text-white tracking-tighter">{currentSneaker.price}</span>
+                 </div>
+                 <div className="w-px h-10 bg-white/10" />
+                 <div>
+                   <span className="text-[10px] font-black text-ds-text-dim uppercase tracking-widest mb-1 block">RESALE_PREDICTION</span>
+                   <span className="text-2xl font-black italic text-ds-blue tracking-tighter">{currentSneaker.resale_prediction}</span>
+                 </div>
+               </div>
+
+               <div className="flex flex-wrap gap-2">
+                 {['BASKETBALL', 'ICONIC', 'HIGH_DEMAND', 'PRO_CORE'].map(tag => (
+                   <div key={tag} className="px-2 py-1 bg-white/5 border border-white/10 rounded-md">
+                     <span className="text-[8px] font-black uppercase tracking-widest text-white/60">{tag}</span>
+                   </div>
+                 ))}
+               </div>
+
+               <div className="pt-6 flex items-center gap-4">
+                 {hasPrev && (
+                   <button 
+                     onClick={() => setDayIndex(dayIndex + 1)}
+                     className="w-14 h-14 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-all text-ds-text-dim hover:text-white group/prev"
+                   >
+                      <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
+                   </button>
+                 )}
+                 <button 
+                  onClick={() => onAction(currentSneaker.name)}
+                  className="flex-1 h-14 bg-ds-blue text-white font-mono font-black uppercase tracking-[0.2em] text-[11px] rounded-xl flex items-center justify-center gap-3 hover:bg-white hover:text-ds-blue border border-ds-blue/50 hover:border-white transition-all duration-500 shadow-[0_0_40px_rgba(96,165,250,0.3)] active:scale-[0.98] group/atc relative overflow-hidden"
+                 >
+                   <div className="absolute inset-0 bg-linear-to-r from-white/10 to-transparent opacity-0 group-hover/atc:opacity-100 transition-opacity" />
+                   <Monitor className="w-5 h-5 group-hover/atc:-translate-y-1 transition-transform" />
+                   VIEW_IN_TERMINAL_PROTO_v1.0
+                 </button>
+
+                 {hasNext && (
+                   <button 
+                     onClick={() => setDayIndex(dayIndex - 1)}
+                     className="w-14 h-14 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-all text-ds-text-dim hover:text-white group/next"
+                   >
+                      <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
+                   </button>
+                 )}
+               </div>
+
+
+               <div className="mt-6 p-4 bg-white/2 border border-white/5 rounded-xl backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                     <div className="w-8 h-8 rounded-lg bg-ds-blue/10 flex items-center justify-center text-ds-blue shrink-0">
+                        <Activity className="w-4 h-4" />
+                     </div>
+                     <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-white mb-1 italic">SOLE_INTEL_ADVISORY:</p>
+                        <p className="text-[9px] font-medium text-ds-text-dim leading-relaxed italic opacity-80">
+                          Tactical surveillance report: High liquidity expected on release. Deployment of sniper slots recommended for optimal entry.
+                        </p>
+                     </div>
+                  </div>
+               </div>
+             </div>
+          </div>
+        </div>
+      </section>
+      
+      <div className="p-20 text-center border-t border-white/5 pt-12">
+        <h3 className="text-xs font-black uppercase text-ds-text-dim tracking-[0.5em] opacity-40">End_Of_Intelligence_Report</h3>
+      </div>
+    </div>
+  )
+}
+
+function DropCalendarView() {
+  const [drops, setDrops] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // 🌍 FETCH_CHRONO_DROPS: Ordered by release sequence
+    const q = query(collection(db, "drop_calendar"), orderBy("release_date", "asc"))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setDrops(data)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-20 space-y-4 opacity-50">
+       <div className="w-10 h-10 border-2 border-ds-blue/20 border-t-ds-blue rounded-full animate-spin" />
+       <span className="text-[10px] font-black uppercase tracking-widest text-ds-blue">Synchronizing_Drop_Calendar</span>
+    </div>
+  )
+
+  if (drops.length === 0) return (
+    <div className="flex flex-col items-center justify-center p-32 space-y-2 opacity-30">
+        <Calendar className="w-12 h-12 mb-4" />
+        <span className="text-[10px] font-black uppercase tracking-widest">No Drops Detected in Radar Range</span>
+        <span className="text-[10px] italic">Scanners active. Checking Boutique endpoints...</span>
+    </div>
+  )
+
+  return (
+    <div className="p-12 max-w-5xl mx-auto">
+       <div className="flex items-center justify-between mb-12">
+          <div className="flex flex-col">
+             <span className="text-ds-blue font-black uppercase tracking-[0.4em] text-[10px] mb-1">GLOBAL_RELEASE_RADAR</span>
+             <h2 className="text-2xl font-black italic uppercase tracking-tighter">Upcoming Drops</h2>
+          </div>
+          <div className="px-4 py-2 bg-ds-surface border border-white/5 rounded-2xl flex items-center gap-2">
+             <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-ds-text-dim">Network: Active</span>
+          </div>
+       </div>
+
+       <div className="space-y-4">
+          {drops.map((drop, i) => {
+            const dropDate = new Date(drop.release_date)
+            const isToday = new Date().toDateString() === dropDate.toDateString()
+            
+            return (
+              <motion.div 
+                key={drop.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="group relative flex gap-8 items-start p-6 bg-ds-surface border border-white/5 rounded-[32px] hover:border-ds-blue/30 transition-all duration-500 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-linear-to-r from-ds-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                {/* --- TIME COLUMN --- */}
+                <div className="flex flex-col items-center justify-center w-24 shrink-0 text-center py-2 relative z-10">
+                   <div className={`px-3 py-1 rounded-md mb-2 ${isToday ? 'bg-ds-blue text-white' : 'bg-white/5 text-ds-text-dim'} border border-white/5`}>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{dropDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                   </div>
+                   <span className="text-xl font-black italic tracking-tighter text-white">{dropDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                </div>
+
+                {/* --- PRODUCT CONTENT --- */}
+                <div className="flex-1 min-w-0 relative z-10 flex gap-6 items-center">
+                   <div className="w-24 h-24 bg-ds-bg rounded-2xl overflow-hidden border border-white/5 shrink-0 group-hover:scale-105 transition-transform duration-500">
+                      <img src={drop.image_url} alt={drop.title} className="w-full h-full object-cover" />
+                   </div>
+                   
+                   <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                         <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                           drop.store === 'Shelflife' ? 'bg-ds-orange/20 text-ds-orange' : 
+                           drop.store === 'Jack Lemkus' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-white/10 text-white'
+                         }`}>
+                           {drop.store}
+                         </span>
+                         {isToday && (
+                           <span className="px-2 py-0.5 bg-ds-blue/20 text-ds-blue rounded text-[8px] font-black uppercase tracking-widest animate-pulse">Launching_Now</span>
+                         )}
+                      </div>
+                      <h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-2 truncate group-hover:text-ds-blue transition-colors">
+                        {drop.title}
+                      </h3>
+                      <div className="flex items-center gap-4 text-ds-text-dim text-[10px] font-black uppercase tracking-widest opacity-60">
+                         <span className="flex items-center gap-1.5"><Tag className="w-3 h-3" /> {drop.price || 'R N/A'}</span>
+                         <span className="flex items-center gap-1.5 underline decoration-white/20 hover:decoration-ds-blue transition-all cursor-pointer">
+                            <ExternalLink className="w-3 h-3" /> Details
+                         </span>
+                      </div>
+                   </div>
+                </div>
+
+                {/* --- CTAS --- */}
+                <div className="shrink-0 flex items-center gap-3 relative z-10">
+                   <button className="h-12 px-6 bg-ds-blue/10 border border-ds-blue/20 rounded-xl text-ds-blue font-black uppercase tracking-widest text-[9px] hover:bg-ds-blue hover:text-white transition-all">
+                      Remind Me
+                   </button>
+                </div>
+              </motion.div>
+            )
+          })}
+       </div>
+
+       <div className="mt-20 p-8 border-t border-white/5 text-center opacity-30">
+          <Activity className="w-6 h-6 mx-auto mb-4 text-ds-blue animate-pulse" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.5em]">Network surveillance active across 3 nodes</h4>
+       </div>
+    </div>
+  )
+}
+
+
+

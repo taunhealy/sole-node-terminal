@@ -27,7 +27,23 @@ def get_or_create_role(bot_token, guild_id, role_name, color, hoist=True):
         return resp.json()['id']
     return None
 
+def delete_channel_if_exists(bot_token, guild_id, name):
+    """Deletes a channel by name to allow for a clean re-provisioning."""
+    base_url = "https://discord.com/api/v10"
+    headers = {"Authorization": f"Bot {bot_token}", "Content-Type": "application/json"}
+    
+    resp = requests.get(f"{base_url}/guilds/{guild_id}/channels", headers=headers)
+    if resp.status_code == 200:
+        for c in resp.json():
+            if c['name'].lower() == name.lower():
+                # Don't delete categories yet, just channels
+                if c['type'] != 4:
+                    print(f"🗑️ NUKE_PROTOCOL: Deleting #{name} ({c['id']})")
+                    requests.delete(f"{base_url}/channels/{c['id']}", headers=headers)
+                    time.sleep(0.5) # Avoid rate limits
+
 def get_or_create_channel(bot_token, guild_id, name, type, parent_id=None, topic="", overwrites=None):
+
     """Checks if a channel exists by name/type, otherwise creates it."""
     base_url = "https://discord.com/api/v10"
     headers = {"Authorization": f"Bot {bot_token}", "Content-Type": "application/json"}
@@ -76,6 +92,12 @@ def provision_server(bot_token, guild_id):
 
     print(f"📡 INITIATING_TIERED_PROVISIONING to Guild: {guild_id}")
 
+    # --- ☢️ NUKE_EXISTING_PROTOCOL ---
+    legacy_channels = ["new-stock-alerts", "market-intel", "early-access-intel", "resellers-recon", "sneaker-of-the-day", "new-releases", "whats-hot"]
+    for l_chan in legacy_channels:
+        delete_channel_if_exists(bot_token, guild_id, l_chan)
+
+
     # 1. Manage Roles
     role_ids = {
         "OVERWATCH": get_or_create_role(bot_token, guild_id, "OVERWATCH", 0xFF0000),
@@ -100,14 +122,17 @@ def provision_server(bot_token, guild_id):
 
     # 4. Managed Channels under categories
     get_or_create_channel(bot_token, guild_id, "trending-intel", 0, parent_id=cat_ids["📡 INTELLIGENCE (AI)"])
+    get_or_create_channel(bot_token, guild_id, "sneaker-of-the-day", 0, parent_id=cat_ids["📡 INTELLIGENCE (AI)"])
     market_id = get_or_create_channel(bot_token, guild_id, "indie-resellers", 15, parent_id=cat_ids["📦 MARKETPLACE"])
     
     # MISSION_CONTROL Alert Channels
     get_or_create_channel(bot_token, guild_id, "live-restocks", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
-    get_or_create_channel(bot_token, guild_id, "new-stock-alerts", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
-    get_or_create_channel(bot_token, guild_id, "market-intel", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
-    get_or_create_channel(bot_token, guild_id, "early-access-intel", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
-    get_or_create_channel(bot_token, guild_id, "resellers-recon", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
+    get_or_create_channel(bot_token, guild_id, "new-releases", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
+    get_or_create_channel(bot_token, guild_id, "whats-hot", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
+    get_or_create_channel(bot_token, guild_id, "market-recon", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
+    get_or_create_channel(bot_token, guild_id, "global-sales", 0, parent_id=cat_ids["🚨 LIVE ALERTS"])
+
+
     
     print("\n🎯 PROVISIONING_COMPLETE | SOLE_SEEKERS_HQ_SECURED")
     return role_ids, market_id

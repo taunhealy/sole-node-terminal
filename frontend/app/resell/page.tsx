@@ -20,7 +20,7 @@ import { db } from '@/lib/firebase'
 import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore'
 
 export default function ResellPage() {
-  const [activeTab, setActiveTab] = useState<'soleseek' | 'discord'>('soleseek')
+  const [activeTab, setActiveTab] = useState<'soleseek' | 'discord'>('discord')
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -45,6 +45,14 @@ export default function ResellPage() {
       // Clientside filtering for Discord sources
       if (activeTab === 'discord') {
          data = data.filter((d: any) => d.source === 'discord')
+         // 🛡️ Deduplicate by Title + Size combo
+         const seen = new Set()
+         data = data.filter((d: any) => {
+             const key = `${d.product_title || d.title || d.name}-${d.size}`
+             if (seen.has(key)) return false
+             seen.add(key)
+             return true
+         })
       }
 
       // Sort clientside to avoid composite index requirements
@@ -124,7 +132,7 @@ export default function ResellPage() {
                   placeholder="Search inventory..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold w-full md:w-80 focus:outline-none focus:border-ds-indigo/50 focus:ring-4 focus:ring-ds-indigo/10 transition-all"
+                  className="bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold w-full md:w-80 focus:outline-none focus:border-ds-indigo/50 focus:ring-4 focus:ring-ds-indigo/10 transition-all font-mono"
                 />
               </div>
             </div>
@@ -135,7 +143,8 @@ export default function ResellPage() {
             <AnimatePresence mode="popLayout">
               {loading ? (
                 Array(8).fill(0).map((_, i) => (
-                  <div key={i} className="aspect-[4/5] rounded-3xl bg-white/5 animate-pulse" />
+                  <div key={i} className="aspect-4/5 rounded-3xl bg-white/5 animate-pulse" />
+
                 ))
               ) : filteredItems.length === 0 ? (
                 <div className="col-span-full py-40 text-center">
@@ -161,9 +170,10 @@ export default function ResellPage() {
                          alt={item.product_title || item.title || item.name}
                          className="w-full h-full object-contain p-12 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-700 opacity-60 group-hover:opacity-100"
                        />
-                       <div className="absolute top-4 right-4 px-3 py-1 bg-white text-ds-bg text-[9px] font-black uppercase rounded-lg shadow-2xl">
-                         {item.price ? (item.price.toString().includes('R') ? item.price : `R${item.price}`) : 'MARKET'}
+                       <div className="absolute top-4 right-4 px-3 py-1 bg-white text-ds-bg text-[10px] font-black uppercase rounded-lg shadow-2xl font-mono">
+                         {item.price ? (item.price.toString().includes('R') ? item.price : `R${item.price.toLocaleString()}`) : 'MARKET'}
                        </div>
+
                        {item.source === 'discord' && (
                          <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 bg-ds-indigo text-white text-[9px] font-black uppercase rounded-lg shadow-2xl">
                            <MessageSquare className="w-3 h-3" /> Crew
@@ -172,18 +182,20 @@ export default function ResellPage() {
                     </div>
                     
                     <div className="p-6">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-ds-text-dim mb-2 truncate">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-ds-text-dim mb-2 truncate font-mono">
                         {item.source === 'discord' ? `@${item.seller_discord || item.author || 'Crew Member'}` : (item.store || 'Boutique Unit')}
                       </div>
-                      <h3 className="text-sm font-black uppercase tracking-tight mb-4 group-hover:text-ds-indigo transition-colors line-clamp-1">
+                      <h3 className="text-[15px] font-black uppercase tracking-tight mb-4 group-hover:text-ds-indigo transition-colors line-clamp-1 leading-none">
                         {item.product_title || item.title || item.name || 'TACTICAL_INVENTORY'}
                       </h3>
+
                       
                       <div className="flex items-center justify-between mt-auto">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 font-mono">
                           <Shield className="w-3 h-3 text-ds-green" />
-                          <span className="text-[9px] font-black uppercase text-ds-green tracking-widest">Verified</span>
+                          <span className="text-[9px] font-bold uppercase text-ds-green tracking-[0.15em]">Verified</span>
                         </div>
+
                         <a 
                           href={item.url || `https://discord.com/channels/${process.env.NEXT_PUBLIC_DISCORD_SERVER_ID}`} 
                           target="_blank" 

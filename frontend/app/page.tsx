@@ -101,66 +101,134 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🧬 Technical Edge: Direct-to-Cart */}
-   
-      {/*  PRO_FEATURES: Unified Power */}
-      <section id="desktop" className="py-32 px-12 border-t border-white/5 bg-ds-bg relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-r from-ds-blue/2 to-transparent opacity-20 pointer-events-none" />
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-20 items-center">
-           <motion.div 
-             initial={{ opacity: 0, x: -50 }} 
-             whileInView={{ opacity: 1, x: 0 }} 
-             viewport={{ once: true }}
-             className="flex-1"
-           >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/5 border border-white/10 mb-6 font-mono text-[9px] text-ds-blue uppercase tracking-widest">
-                 System_Module: Desktop_Engine_v1.8
-              </div>
-              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">
-                Unified <br /> <span className="text-white">Power.</span>
-              </h2>
-              <p className="text-gray-300 text-base leading-relaxed font-medium mb-10">
-                The **SoleSeek Sniper Hub** is our dedicated desktop application designed for Pro users who need sub-second monitoring and flawless execution. By running locally, you bypass common data-center bans and gain direct control over your hardware.
-              </p>
-              
-              <div className="space-y-6">
-                 {[
-                    { icon: Monitor, title: 'Multi-Node Deployment', desc: 'Local nodes run across different machines or servers for scale and fast stock monitoring.' },
-                    { icon: Globe, title: 'Rotating Hive Proxies', desc: 'Pro users gain access to our secure residential proxy pool for advanced IP rotation.' },
-                    { icon: Activity, title: '3-Tier Speed Control', desc: 'Choose between Idle (1hr), Anticipation (60s), and Sniper (0.5s) polling modes.' },
-                    { icon: Shield, title: 'Stealth Browser Engine', desc: 'Built-in undetected-driver technology to survive invasive bot-detection security.' }
-                 ].map((feat, idx) => (
-                    <div key={idx} className="flex gap-6 group p-4 rounded-2xl hover:bg-white/5 transition-all">
-                       <div className="shrink-0 w-12 h-12 rounded-xl bg-ds-blue/10 border border-ds-blue/30 flex items-center justify-center text-ds-blue group-hover:scale-110 transition-transform">
-                          <feat.icon className="w-5 h-5" />
-                       </div>
-                       <div>
-                          <h4 className="text-sm font-black uppercase text-white mb-1 tracking-wider">{feat.title}</h4>
-                          <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-sm">{feat.desc}</p>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           </motion.div>
+   {/* 🔮 Discord Community: The Inner Circle */}
+      <section className="py-40 px-12 border-t border-white/5 bg-linear-to-b from-ds-bg to-ds-indigo/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] bg-ds-indigo/10 blur-[150px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ds-indigo/20 border border-ds-indigo/30 text-[10px] font-black uppercase text-ds-indigo tracking-widest mb-6">
+              <Sparkles className="w-3.5 h-3.5" />
+              Community_Moat
+            </span>
+            <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-8">
+              Join the <br /><span className="text-ds-indigo">Inner Circle.</span>
+            </h2>
+            <p className="text-ds-text-dim text-xl max-w-2xl mx-auto font-medium leading-relaxed italic">
+              Access the exclusive Discord hub where real-time boutique scrapers meet human intelligence.
+            </p>
+          </motion.div>
 
-           <div className="flex-1">
-              <div className="relative rounded-[40px] overflow-hidden border border-white/10 shadow-2xl group">
-                 <div className="absolute inset-0 bg-ds-blue/5 mix-blend-overlay z-10 pointer-events-none" />
-                 <img 
-                    src="/localized_power_node.png" 
-                    alt="Unified Power Node Network" 
-                    className="w-full aspect-square object-cover transform scale-105 group-hover:scale-100 transition-transform duration-700"
-                 />
-                 <div className="absolute bottom-6 left-6 right-6 p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl z-20">
-                    <div className="flex items-center gap-3">
-                       <Globe className="w-5 h-5 text-ds-blue animate-pulse" />
-                       <span className="text-[10px] font-black uppercase tracking-widest text-white">MULTI-NODE_V1.8: Distributed_Fleet_Active</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-20 text-left">
+             {[
+               { 
+                 title: '#Resellers', 
+                 desc: 'Direct buy/sell signals and secondary market price analysis streamed instantly to your terminal.',
+                 icon: <TrendingUp className="w-5 h-5" />
+               },
+               { 
+                 title: '#AI-Daily-Briefings', 
+                 desc: 'Tactical daily broadcasts summarizing SA & Global sneaker shifts, inventory drains, and community sentiment.',
+                 icon: <Sparkles className="w-5 h-5 text-ds-green" />
+               },
+               { 
+                 title: '#MarketIntel', 
+                 desc: 'Regional inventory shifts across Shelflife, Archive, and Lemkus—repacked into actionable intelligence.',
+                 icon: <Search className="w-5 h-5" />
+               }
+             ].map((group) => (
+               <div key={group.title} className="p-8 rounded-3xl bg-ds-surface/50 border border-white/5 hover:border-ds-indigo/30 transition-all group backdrop-blur-3xl shadow-2xl">
+                  <div className="p-3 rounded-xl bg-ds-indigo/10 text-ds-indigo w-fit mb-6 group-hover:scale-110 transition-transform">
+                     {group.icon}
+                  </div>
+                  <h3 className="text-xl font-black uppercase tracking-widest text-white mb-3">{group.title}</h3>
+                  <p className="text-sm text-ds-text-dim leading-relaxed font-medium opacity-80">{group.desc}</p>
+               </div>
+             ))}
+          </div>
+
+          <a 
+            href="https://discord.gg/soleseek" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group relative px-12 py-6 bg-white text-ds-bg rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-4 hover:bg-ds-indigo hover:text-white transition-all overflow-hidden shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+          >
+             <div className="absolute inset-0 bg-linear-to-r from-ds-indigo to-ds-blue opacity-0 group-hover:opacity-100 transition-opacity" />
+             <span className="relative z-10 flex items-center gap-3">
+               Enter The SoleSeekers HQ <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+             </span>
+          </a>
+          
+          <div className="mt-12 flex items-center gap-8 opacity-40">
+             <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-ds-green animate-pulse" />
+             </div>
+             <div className="w-px h-4 bg-white/10" />
+             <div className="text-[9px] font-black uppercase tracking-widest">Verified via Discord Auth</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 🧬 Technical Edge: Direct-to-Cart */}
+       {/* 📡 Market Intelligence: The Terminal Experience */}
+      <section className="py-32 px-12 border-t border-white/5 bg-ds-bg relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-ds-indigo/5 blur-[150px] rounded-full pointer-events-none" />
+        <div className="max-w-7xl mx-auto">
+           <div className="text-center mb-24">
+              <span className="text-ds-indigo font-black uppercase tracking-widest text-[10px] mb-4 block">Market Intelligence</span>
+              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">The Terminal <span className="text-white">Experience.</span></h2>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                 { icon: TrendingUp, title: "Trending Heat", desc: "Instantly view the most sought-after pairs currently being monitored across all nodes." },
+                 { icon: Zap, title: "New Releases", desc: "A live feed of the latest arrivals hitting South African boutique inventory systems." },
+                 { icon: Activity, title: "Restock Tracker", desc: "Real-time logs of stock quantity updates, ensuring you see restocks as they happen." },
+                 { icon: Star, title: "Smart Watchlist", desc: "Tag specific SKUs and receive instant notifications when your size becomes available." }
+              ].map((feat, idx) => (
+                 <motion.div 
+                    key={idx}
+                    whileInView={{ opacity: 1, y: 0 }} 
+                    initial={{ opacity: 0, y: 30 }} 
+                    transition={{ delay: idx * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-10 rounded-[40px] bg-white/2 border border-white/5 hover:border-ds-indigo/30 transition-all group relative overflow-hidden"
+                 >
+                    <div className="absolute inset-0 bg-ds-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10">
+                       <div className="w-14 h-14 rounded-2xl bg-ds-indigo/10 border border-ds-indigo/30 flex items-center justify-center text-ds-indigo mb-8 shadow-2xl group-hover:scale-110 transition-transform">
+                          <feat.icon className="w-7 h-7" />
+                       </div>
+                       <h4 className="text-lg font-black uppercase text-white mb-4 tracking-tight italic">{feat.title}</h4>
+                       <p className="text-sm text-gray-400 leading-relaxed font-medium">{feat.desc}</p>
                     </div>
-                 </div>
-              </div>
+                 </motion.div>
+              ))}
+           </div>
+
+           <div className="flex justify-center mt-20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                <Link href="/seek" className="group relative h-16 px-12 bg-ds-indigo text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all shadow-[0_0_40px_rgba(129,140,248,0.2)] active:scale-95 overflow-hidden">
+                  <div className="absolute inset-0 bg-white opacity-0" />
+                  Launch Terminal
+                  <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </motion.div>
            </div>
         </div>
       </section>
+    
 
     
       <section id="about" className="py-32 bg-white/1 border-t border-white/5 px-8 relative overflow-hidden">
@@ -283,6 +351,65 @@ export default function LandingPage() {
         </div>
       </section>
 
+        {/*  PRO_FEATURES: Unified Power */}
+            <section id="desktop" className="py-32 px-12 border-t border-white/5 bg-ds-bg relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full bg-linear-to-r from-ds-blue/2 to-transparent opacity-20 pointer-events-none" />
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-20 items-center">
+                 <motion.div 
+                   initial={{ opacity: 0, x: -50 }} 
+                   whileInView={{ opacity: 1, x: 0 }} 
+                   viewport={{ once: true }}
+                   className="flex-1"
+                 >
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/5 border border-white/10 mb-6 font-mono text-[9px] text-ds-blue uppercase tracking-widest">
+                       System_Module: Desktop_Engine_v1.8
+                    </div>
+                    <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">
+                      Unified <br /> <span className="text-white">Power.</span>
+                    </h2>
+                    <p className="text-gray-300 text-base leading-relaxed font-medium mb-10">
+                      The **SoleSeek Sniper Hub** is our dedicated desktop application designed for Pro users who need sub-second monitoring and flawless execution. By running locally, you bypass common data-center bans and gain direct control over your hardware.
+                    </p>
+                    
+                    <div className="space-y-6">
+                       {[
+                          { icon: Monitor, title: 'Multi-Node Deployment', desc: 'Local nodes run across different machines or servers for scale and fast stock monitoring.' },
+                          { icon: Globe, title: 'Rotating Hive Proxies', desc: 'Pro users gain access to our secure residential proxy pool for advanced IP rotation.' },
+                          { icon: Activity, title: '3-Tier Speed Control', desc: 'Choose between Idle (1hr), Anticipation (60s), and Sniper (0.5s) polling modes.' },
+                          { icon: Shield, title: 'Stealth Browser Engine', desc: 'Built-in undetected-driver technology to survive invasive bot-detection security.' }
+                       ].map((feat, idx) => (
+                          <div key={idx} className="flex gap-6 group p-4 rounded-2xl hover:bg-white/5 transition-all">
+                             <div className="shrink-0 w-12 h-12 rounded-xl bg-ds-blue/10 border border-ds-blue/30 flex items-center justify-center text-ds-blue group-hover:scale-110 transition-transform">
+                                <feat.icon className="w-5 h-5" />
+                             </div>
+                             <div>
+                                <h4 className="text-sm font-black uppercase text-white mb-1 tracking-wider">{feat.title}</h4>
+                                <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-sm">{feat.desc}</p>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </motion.div>
+      
+                 <div className="flex-1">
+                    <div className="relative rounded-[40px] overflow-hidden border border-white/10 shadow-2xl group">
+                       <div className="absolute inset-0 bg-ds-blue/5 mix-blend-overlay z-10 pointer-events-none" />
+                       <img 
+                          src="/localized_power_node.png" 
+                          alt="Unified Power Node Network" 
+                          className="w-full aspect-square object-cover transform scale-105 group-hover:scale-100 transition-transform duration-700"
+                       />
+                       <div className="absolute bottom-6 left-6 right-6 p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl z-20">
+                          <div className="flex items-center gap-3">
+                             <Globe className="w-5 h-5 text-ds-blue animate-pulse" />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-white">MULTI-NODE_V1.8: Distributed_Fleet_Active</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </section>
+
       {/* 🔮 All Features Grid (Desktop App / Pro Engine Focus) */}
       <section className="py-32 px-12 border-t border-white/5 bg-ds-bg relative">
         <div className="max-w-7xl mx-auto">
@@ -322,58 +449,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 📡 Market Intelligence: The Terminal Experience */}
-      <section className="py-32 px-12 border-t border-white/5 bg-ds-bg relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-ds-indigo/5 blur-[150px] rounded-full pointer-events-none" />
-        <div className="max-w-7xl mx-auto">
-           <div className="text-center mb-24">
-              <span className="text-ds-indigo font-black uppercase tracking-widest text-[10px] mb-4 block">Market Intelligence</span>
-              <h2 className="text-5xl font-black italic uppercase leading-tight mb-8 tracking-tight">The Terminal <span className="text-white">Experience.</span></h2>
-           </div>
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                 { icon: TrendingUp, title: "Trending Heat", desc: "Instantly view the most sought-after pairs currently being monitored across all nodes." },
-                 { icon: Zap, title: "New Releases", desc: "A live feed of the latest arrivals hitting South African boutique inventory systems." },
-                 { icon: Activity, title: "Restock Tracker", desc: "Real-time logs of stock quantity updates, ensuring you see restocks as they happen." },
-                 { icon: Star, title: "Smart Watchlist", desc: "Tag specific SKUs and receive instant notifications when your size becomes available." }
-              ].map((feat, idx) => (
-                 <motion.div 
-                    key={idx}
-                    whileInView={{ opacity: 1, y: 0 }} 
-                    initial={{ opacity: 0, y: 30 }} 
-                    transition={{ delay: idx * 0.1 }}
-                    viewport={{ once: true }}
-                    className="p-10 rounded-[40px] bg-white/2 border border-white/5 hover:border-ds-indigo/30 transition-all group relative overflow-hidden"
-                 >
-                    <div className="absolute inset-0 bg-ds-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative z-10">
-                       <div className="w-14 h-14 rounded-2xl bg-ds-indigo/10 border border-ds-indigo/30 flex items-center justify-center text-ds-indigo mb-8 shadow-2xl group-hover:scale-110 transition-transform">
-                          <feat.icon className="w-7 h-7" />
-                       </div>
-                       <h4 className="text-lg font-black uppercase text-white mb-4 tracking-tight italic">{feat.title}</h4>
-                       <p className="text-sm text-gray-400 leading-relaxed font-medium">{feat.desc}</p>
-                    </div>
-                 </motion.div>
-              ))}
-           </div>
+  
 
-           <div className="flex justify-center mt-20">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.4 }}
-              >
-                <Link href="/seek" className="group relative h-16 px-12 bg-ds-indigo text-white rounded-2xl flex items-center justify-center font-black uppercase text-xs tracking-widest transition-all shadow-[0_0_40px_rgba(129,140,248,0.2)] active:scale-95 overflow-hidden">
-                  <div className="absolute inset-0 bg-white opacity-0" />
-                  Launch Terminal
-                  <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </motion.div>
-           </div>
-        </div>
-      </section>
+   
 
       {/* 💎 Pricing Section */}
       <section id="pricing" className="py-20 px-8 bg-ds-bg relative overflow-hidden">
@@ -522,80 +600,6 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* 🔮 Discord Community: The Inner Circle */}
-      <section className="py-40 px-12 border-t border-white/5 bg-linear-to-b from-ds-bg to-ds-indigo/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] bg-ds-indigo/10 blur-[150px] rounded-full pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12"
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ds-indigo/20 border border-ds-indigo/30 text-[10px] font-black uppercase text-ds-indigo tracking-widest mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              Community_Moat
-            </span>
-            <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-8">
-              Join the <br /><span className="text-ds-indigo">Inner Circle.</span>
-            </h2>
-            <p className="text-ds-text-dim text-xl max-w-2xl mx-auto font-medium leading-relaxed italic">
-              Access the exclusive Discord hub where real-time boutique scrapers meet human intelligence.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-20 text-left">
-             {[
-               { 
-                 title: '#Resellers', 
-                 desc: 'Direct buy/sell signals and secondary market price analysis streamed instantly to your terminal.',
-                 icon: <TrendingUp className="w-5 h-5" />
-               },
-               { 
-                 title: '#AI-Daily-Briefings', 
-                 desc: 'Tactical daily broadcasts summarizing SA & Global sneaker shifts, inventory drains, and community sentiment.',
-                 icon: <Sparkles className="w-5 h-5 text-ds-green" />
-               },
-               { 
-                 title: '#MarketIntel', 
-                 desc: 'Regional inventory shifts across Shelflife, Archive, and Lemkus—repacked into actionable intelligence.',
-                 icon: <Search className="w-5 h-5" />
-               }
-             ].map((group) => (
-               <div key={group.title} className="p-8 rounded-3xl bg-ds-surface/50 border border-white/5 hover:border-ds-indigo/30 transition-all group backdrop-blur-3xl shadow-2xl">
-                  <div className="p-3 rounded-xl bg-ds-indigo/10 text-ds-indigo w-fit mb-6 group-hover:scale-110 transition-transform">
-                     {group.icon}
-                  </div>
-                  <h3 className="text-xl font-black uppercase tracking-widest text-white mb-3">{group.title}</h3>
-                  <p className="text-sm text-ds-text-dim leading-relaxed font-medium opacity-80">{group.desc}</p>
-               </div>
-             ))}
-          </div>
-
-          <a 
-            href="https://discord.gg/soleseek" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="group relative px-12 py-6 bg-white text-ds-bg rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-4 hover:bg-ds-indigo hover:text-white transition-all overflow-hidden shadow-[0_0_50px_rgba(255,255,255,0.1)]"
-          >
-             <div className="absolute inset-0 bg-linear-to-r from-ds-indigo to-ds-blue opacity-0 group-hover:opacity-100 transition-opacity" />
-             <span className="relative z-10 flex items-center gap-3">
-               Enter The SoleSeekers HQ <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-             </span>
-          </a>
-          
-          <div className="mt-12 flex items-center gap-8 opacity-40">
-             <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-ds-green animate-pulse" />
-             </div>
-             <div className="w-px h-4 bg-white/10" />
-             <div className="text-[9px] font-black uppercase tracking-widest">Verified via Discord Auth</div>
-          </div>
         </div>
       </section>
 

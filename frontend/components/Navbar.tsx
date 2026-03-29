@@ -81,13 +81,15 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Snipe', path: '/snipe' },
     { name: 'Seek', path: '/seek' },
     { name: 'Compare', path: '/compare' },
     { name: 'AI Intel', path: '/ai-intel' },
+    { name: 'Snipe', path: '/snipe' },
+    { name: 'Trending', path: '/trending' },
     { name: 'Pricing', path: '/#pricing' },
     { name: 'Blog', path: '/blog' }
   ]
+
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -476,7 +478,10 @@ export default function Navbar() {
                   const Icon = link.name === 'Home' ? Zap :
                                link.name === 'Seek' ? Search :
                                link.name === 'Compare' ? Target :
-                               link.name === 'Blog' ? Activity : Zap
+                               link.name === 'AI Intel' ? Shield :
+                               link.name === 'Snipe' ? Monitor :
+                               link.name === 'Sneaker Of The Day' ? Activity : Zap
+
                   return (
                     <motion.div
                       key={link.path}

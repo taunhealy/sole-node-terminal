@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)'],
+        mono: ['var(--font-mono)'],
+      },
       colors: {
         'ds-bg': '#101217',
         'ds-surface': '#171920',
@@ -41,6 +45,7 @@ module.exports = {
         },
         'ds-text-dim': '#8b8e94',
       },
+
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':

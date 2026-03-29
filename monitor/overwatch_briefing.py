@@ -46,84 +46,120 @@ CHANNELS = {
 }
 
 def fetch_restock_data():
-    """Fetches restock logs from the last 24 hours."""
-    yesterday = datetime.now() - timedelta(hours=24)
-    logs_ref = db.collection("restock_logs").where("detected_at", ">=", yesterday).limit(100)
-    return [doc.to_dict() for doc in logs_ref.stream()]
-
-def generate_multi_dispatch_intel(logs):
-    """Generates 4 unique intelligence reports based on market data."""
-    log_summary = "\n".join([f"- {l.get('product_title')} at {l.get('store')} (Size {l.get('size_title')})" for l in logs[:20]])
-
-    missions = {
-        "NEW_STOCK_ALERTS": (
-            "Analyze these restocks for price drops and profit margins. "
-            "Identify 2-3 items with high resale potential. "
-            "Format as: '🚨 PRICE_DROP_DETECTED: [Item] @ [Store] | Margin: RXXXX'."
-        ),
-        "MARKET_INTEL": (
-            "Analyze these movements to predict upcoming drops or restocks. "
-            "Focus on 'Sector Confirmed' leaks. "
-            "Format as: '📡 MARKET_INTEL_CONFIRMED: [Item] | Strategy: [Wait/Buy]'."
-        ),
-        "EARLY_ACCESS_INTEL": (
-            "Identify high-value variants and hidden product links from the data. "
-            "Format as: '🛰️ EARLY_ACCESS_INTELLIGENCE: [Item] | Status: INCOMING'."
-        ),
-        "RESELLERS_RECON": (
-            "Analyze store behavior to identify localized supply scouting opportunities. "
-            "Format as: '🏹 RESELLERS_RECON: [Location/Store] | Tip: [Inventory Low/High]'. "
-            "Use South African stores (Shelflife, Archive, Lemkus) for location context."
-        )
-    }
-
-    briefings = {}
-    for mission, instructions in missions.items():
-        prompt = f"""
-        You are 'SoleSeek Overwatch' AI Dispatch. 
-        DATA SECTOR: {log_summary}
-        MISSION: {instructions}
+    """Retrieves the last 15 minutes of stock activity for AI analysis."""
+    threshold = datetime.now() - timedelta(minutes=15)
+    docs = db.collection("restock_logs").where("detected_at", ">=", threshold).limit(10).get()
+    
+    # Returning enriched objects for better AI context
+    intel_pool = []
+    for d in docs:
+        data = d.to_dict()
+        # Attempt to find the core product record for the URL
+        sku_id = data.get("sku_id")
+        p_doc = db.collection("stock").document(sku_id).get()
+        url = p_doc.to_dict().get("url", "#") if p_doc.exists else "#"
         
-        REQUIREMENTS:
-        - 1-2 lines per alert Max.
-        - Strategic, professional tone. 
-        - Use tactical notation (🛰️, 🛡️, 🚨).
-        - NO fluff.
-        """
+        intel_pool.append({
+            "name": data.get("product_title"),
+            "store": data.get("store", "Boutique"),
+            "url": url,
+            "type": data.get("type", "RESTOCK")
+        })
+        
+    return intel_pool
+
+def generate_multi_dispatch_intel(logs, blogs=None):
+    """Generates 3 unique intelligence reports based on market and blog data."""
+    prompt = f"""
+    ACT AS: SoleSeek Intelligence Commander.
+    CONTEXT: You are drafting tactical Discord briefings for an elite sneaker syndicate in South Africa.
+    
+    RESTOCK_DATA (JSON format with URLs):
+    {json.dumps(logs, indent=2)}
+    
+    MARKET_EDITORIALS (Live Boutique Blogs):
+    {json.dumps(blogs if blogs else [], indent=2)}
+    
+    MISSION_OBJECTIVE:
+    Generate THREE distinct briefings.
+    1. "NEW_STOCK_ALERTS": Highlight the most liquid restocks. **LINK EVERYTHING.**
+    2. "MARKET_INTEL": Synthesize the MARKET_EDITORIALS (blogs) and RESTOCK_DATA to predict moves. Focus on trends like 'Adifom', 'Retro Basketball', or 'Dunk Saturations'. **LINK THE BLOG TITLES.**
+    3. "RESELLERS_RECON": Tactical buy/wait advice.
+    
+    TONE: Noir, Technical, Professional. Use bullet points.
+    FORMAT: Return a JSON dictionary with keys "NEW_STOCK_ALERTS", "MARKET_INTEL", and "RESELLERS_RECON".
+    
+    CRITICAL: Every product or blog mentioned MUST be hyperlinked using the format [Title](URL).
+    """
+
+    try:
         response = model.generate_content(prompt)
-        briefings[mission] = response.text
-    
-    return briefings
+        text = response.text
+        # Clean potential markdown from AI response
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        return json.loads(text)
+    except Exception as e:
+        print(f"❌ AI_GEN_ERROR: {e}")
+        return {
+            "NEW_STOCK_ALERTS": "📡 **SURVEILLANCE_PULSE**: No new restocks detected. Fleet maintaining holding pattern.",
+            "MARKET_INTEL": "📡 **MARKET_RECON**: Localized boutique activity remains stable.",
+            "RESELLERS_RECON": "📡 **RESELLERS_RECON**: No high-frequency trade signals detected."
+        }
 
-def broadcast_to_channel(channel_key, text, title, color):
-    """Sends a tactical message to a specific Discord channel."""
-    if not DISCORD_TOKEN: return
-    
-    channel_id = CHANNELS.get(channel_key)
-    if not channel_id: return
+def overwatch_mission_dispatch(token=None, channel_map=None, blogs=None):
+    """Master entry point for AI fleet intelligence broadcasting."""
+    global DISCORD_TOKEN
+    if token:
+        DISCORD_TOKEN = token
+        
+    print("📡 INITIATING_MULTI_SECTOR_INTELLIGENCE_DISPATCH...")
+    try:
+        logs = fetch_restock_data()
+        
+        # 🧪 MISSION_PLANNING: Generate intel based on data sector
+        briefings = generate_multi_dispatch_intel(logs)
+        
+        # 🚀 SECTOR_DISPATCH: Sending localized briefings to Discord
+        print("🚀 EXECUTING_GRAND_DISPATCH...")
+        
+        # New Stock mapping
+        new_stock_id = channel_map.get("NEW_STOCK_ALERTS") if channel_map else "1487620217826836566"
+        market_intel_id = channel_map.get("MARKET_INTEL") if channel_map else "1487620222297837681"
+        resell_recon_id = channel_map.get("RESELLERS_RECON") if channel_map else "1487620231282294866"
 
-    url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
+        broadcast_to_channel(new_stock_id, briefings.get("NEW_STOCK_ALERTS"), "MARKET_OPPS: PRICE_TRACKER", 0xFF0000)
+        broadcast_to_channel(market_intel_id, briefings.get("MARKET_INTEL"), "MARKET_INTEL: DROP_ANALYSIS", 0x3B82F6)
+        broadcast_to_channel(resell_recon_id, briefings.get("RESELLERS_RECON"), "RESELLERS_RECON: SURVEILLANCE", 0x10B981)
+        
+        print("🎯 MISSION_COMPLETE | ALL_SECTORS_POPULATED")
+        return True
+    except Exception as e:
+        print(f"❌ OVERWATCH_DISPATCH_FAILURE: {e}")
+        return False
+
+def broadcast_to_channel(channel_id, text, title, color):
+    """Sends a tactical message to a specific Discord channel ID."""
+    if not DISCORD_TOKEN: 
+        print("⚠️ DISCORD_TOKEN_MISSING_IN_OVERWATCH")
+        return
+    
+    # Check if we were passed a key instead of an ID
+    actual_id = CHANNELS.get(channel_id) if channel_id in CHANNELS else channel_id
+
+    url = f"https://discord.com/api/v10/channels/{actual_id}/messages"
     headers = {"Authorization": f"Bot {DISCORD_TOKEN}", "Content-Type": "application/json"}
     
     embed = {
         "title": f"🛰️ {title}",
         "description": text,
         "color": color,
-        "footer": {"text": f"SOLE_SEEK_AI_HUB | Sector: South Africa | {datetime.now().strftime('%Y-%m-%d %H:%M')}"}
+        "footer": {"text": f"SOLE_SEEK_AI_HUB | Sector Dispatch Active"},
+        "timestamp": datetime.now().isoformat()
     }
     
-    requests.post(url, headers=headers, json={"embeds": [embed]})
+    res = requests.post(url, headers=headers, json={"embeds": [embed]})
+    print(f"📡 DISCORD_DISPATCH_RESULT | Status: {res.status_code} | Channel: {actual_id} | Response: {res.text}")
 
 if __name__ == "__main__":
-    print("📡 INITIATING_MULTI_SECTOR_INTELLIGENCE_DISPATCH...")
-    logs = fetch_restock_data()
-    print("🧠 ENGAGING_AI_MISSION_PLANNING...")
-    briefings = generate_multi_dispatch_intel(logs)
-    
-    print("🚀 EXECUTING_GRAND_DISPATCH...")
-    broadcast_to_channel("NEW_STOCK_ALERTS", briefings["NEW_STOCK_ALERTS"], "NEW_STOCK_ALERTS: MARGIN_OPPS", 0xFF0000)
-    broadcast_to_channel("MARKET_INTEL", briefings["MARKET_INTEL"], "MARKET_INTEL: DROP_CONFIRMATIONS", 0x3B82F6)
-    broadcast_to_channel("EARLY_ACCESS_INTEL", briefings["EARLY_ACCESS_INTEL"], "EARLY_ACCESS_INTELLIGENCE", 0x8B5CF6)
-    broadcast_to_channel("RESELLERS_RECON", briefings["RESELLERS_RECON"], "RESELLERS_RECON: LOCALIZED_SURVEILLANCE", 0x10B981)
-    
-    print("🎯 MISSION_COMPLETE | ALL_SECTORS_POPULATED")
+    overwatch_mission_dispatch()

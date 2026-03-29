@@ -1,12 +1,15 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
+
 import { AuthProvider } from '@/lib/AuthContext'
 import Navbar from '@/components/Navbar'
 import GlobalTicker from '@/components/GlobalTicker'
 import SniperBot from '@/components/SniperBot'
 import Script from 'next/script'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
+
 
 export const metadata = {
   title: 'SOLE SEEK | Sneaker Intelligence',
@@ -23,7 +26,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="bg-ds-bg">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${mono.variable} font-sans`}>
+
         <AuthProvider>
           <Navbar />
           <main className="pt-20 min-h-screen">

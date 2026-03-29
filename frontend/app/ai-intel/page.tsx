@@ -51,11 +51,11 @@ interface Message {
 
 const QUICK_ACTIONS = [
   {
-    title: "Best Flip Opportunity",
-    query: "Identify the top 3 high-heat items for quick resale profit based on current demand.",
-    icon: TrendingUp,
-    color: "text-ds-green",
-    bg: "bg-ds-green/10"
+    title: "Limited Editions",
+    query: "Scan the database for limited edition sneakers and rare heat that may be highly valuable to collectors.",
+    icon: Star,
+    color: "text-ds-indigo",
+    bg: "bg-ds-indigo/10"
   },
   {
     title: "Early Access Intel",

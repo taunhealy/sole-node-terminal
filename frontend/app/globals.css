@@ -12,7 +12,12 @@
   --color-ds-text-dim: #8b8e94;
   --color-ds-gold: #D4AF37;
   --color-ds-orange: #F97316;
+  
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono);
+
 }
+
 
 html {
   scroll-behavior: smooth;
